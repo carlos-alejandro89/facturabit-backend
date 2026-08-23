@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Dapper" Version="2.1.79" />
+        <PackageReference Include="EFCore.NamingConventions" Version="9.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.19" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.19">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+        <PackageReference Include="RestSharp" Version="114.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Api\Contracts\Requests\" />
+      <Folder Include="Api\Contracts\Responses\" />
+      <Folder Include="Api\Controllers\" />
+      <Folder Include="Api\Extensions\" />
+      <Folder Include="Api\Filters\" />
+      <Folder Include="Api\Middleware\" />
+      <Folder Include="Application\Abstractions\" />
+      <Folder Include="Application\Behaviors\" />
+      <Folder Include="Application\Exceptions\" />
+      <Folder Include="Application\Features\" />
+      <Folder Include="Application\Mappings\" />
+      <Folder Include="Application\DTOs\" />
+      <Folder Include="Application\Validators\" />
+      <Folder Include="Certificados\" />
+      <Folder Include="Domain\Enums\" />
+      <Folder Include="Domain\Events\" />
+      <Folder Include="Domain\Exceptions\" />
+      <Folder Include="Domain\Interfaces\" />
+      <Folder Include="Domain\ValueObjects\" />
+      <Folder Include="Infrastructure\Identity\" />
+      <Folder Include="Infrastructure\Persistence\Configurations\" />
+      <Folder Include="Infrastructure\Persistence\Migrations\" />
+      <Folder Include="Infrastructure\Persistence\Repositories\" />
+      <Folder Include="Infrastructure\Services\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="Infrastructure\Resources\Cfdi\cadenaoriginal_4_0.xslt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+    </ItemGroup>
+
+</Project>
