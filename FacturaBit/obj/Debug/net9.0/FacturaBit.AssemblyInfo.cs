@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FacturaBit")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6c9a95af8ecbb6e3f3ee736b6107e7cbbb6c0da2")]
 [assembly: System.Reflection.AssemblyProductAttribute("FacturaBit")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FacturaBit")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

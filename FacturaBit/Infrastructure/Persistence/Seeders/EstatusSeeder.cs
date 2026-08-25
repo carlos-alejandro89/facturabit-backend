@@ -17,7 +17,9 @@ public static class EstatusSeeder
             new Estatus { Id = 5, NombreEstatus = "EN PROCESO", DescripcionEstatus = "Solicitada. Se envió la notificación al Buzón Tributario del receptor y está en espera de su respuesta.", CreatedAt = seedDate, UpdatedAt = seedDate, Guid = "c50f34f6-3a40-4d1c-b304-1504b324c6de" },
             new Estatus { Id = 6, NombreEstatus = "ACEPTADO", DescripcionEstatus = "El receptor aprobó la cancelación desde su Buzón Tributario.", CreatedAt = seedDate, UpdatedAt = seedDate, Guid = "d61a45a7-4b51-4e2d-c415-2615c435d7ef" },
             new Estatus { Id = 7, NombreEstatus = "RECHAZADO", DescripcionEstatus = "El receptor negó la cancelación. La factura se mantiene Vigente.", CreatedAt = seedDate, UpdatedAt = seedDate, Guid = "e72b56b8-5c62-4f3e-d526-3726d546e800" },
-            new Estatus { Id = 8, NombreEstatus = "ERROR", DescripcionEstatus = "Ocurrió un error al generar, validar o timbrar el XML.", CreatedAt = seedDate, UpdatedAt = seedDate, Guid = "f83c67c9-6d73-404f-e637-4837e657f911" }
+            new Estatus { Id = 8, NombreEstatus = "ERROR", DescripcionEstatus = "Ocurrió un error al generar, validar o timbrar el XML.", CreatedAt = seedDate, UpdatedAt = seedDate, Guid = "f83c67c9-6d73-404f-e637-4837e657f911" },
+            new Estatus { Id = 9, NombreEstatus = "COMPLETADA", DescripcionEstatus = "La operación se completó satisfactoriamente.", CreatedAt = seedDate, UpdatedAt = seedDate, Guid = "a9c3ee31-6bb3-4e4c-8d12-80a455bd635f" },
+            new Estatus { Id = 10, NombreEstatus = "REEMBOLSADA", DescripcionEstatus = "El importe de la operación fue reembolsado al cliente.", CreatedAt = seedDate, UpdatedAt = seedDate, Guid = "a00daf3a-eaed-48c9-bc4d-247013e48980" }
         );
     }
 }

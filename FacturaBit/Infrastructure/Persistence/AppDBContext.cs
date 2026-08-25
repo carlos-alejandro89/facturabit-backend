@@ -73,5 +73,6 @@ public class AppDBContext  : DbContext
         modelBuilder.SeedRoles();
         modelBuilder.SeedSatRegimenFiscal();
         modelBuilder.SeedEstatus();
+        modelBuilder.SeedSuscripciones();
     }
 }

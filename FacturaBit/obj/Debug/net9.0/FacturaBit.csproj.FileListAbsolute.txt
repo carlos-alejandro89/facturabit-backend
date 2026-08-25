@@ -140,3 +140,4 @@
 /Users/carlosalejandro/Documents/Dev/dotNet/FacturaBit/FacturaBit/obj/Debug/net9.0/FacturaBit.genruntimeconfig.cache
 /Users/carlosalejandro/Documents/Dev/dotNet/FacturaBit/FacturaBit/obj/Debug/net9.0/ref/FacturaBit.dll
 /Users/carlosalejandro/Documents/Dev/dotNet/FacturaBit/FacturaBit/bin/Debug/net9.0/Infrastructure/Resources/Cfdi/cadenaoriginal_4_0.xslt
+/Users/carlosalejandro/Documents/Dev/dotNet/FacturaBit/FacturaBit/obj/Debug/net9.0/FacturaBit.sourcelink.json
