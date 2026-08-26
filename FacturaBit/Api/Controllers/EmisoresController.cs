@@ -4,11 +4,13 @@ using FacturaBit.Application.Abstractions;
 using FacturaBit.Infrastructure.Security.Cryptography;
 using FacturaBit.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Security.Cryptography;
 
 namespace FacturaBit.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/emisores")]
 public sealed class EmisoresController : ControllerBase
 {

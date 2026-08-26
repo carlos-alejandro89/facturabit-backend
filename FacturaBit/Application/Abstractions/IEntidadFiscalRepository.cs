@@ -10,6 +10,8 @@ public interface IEntidadFiscalRepository
     Task<bool> ExisteEmailAsync(string email, CancellationToken cancellationToken);
     Task<bool> ExisteRedComercialAsync(string nombre, CancellationToken cancellationToken);
     Task<Rol?> ObtenerRolPorNombreAsync(string nombre, CancellationToken cancellationToken);
+    Task<Suscripcion?> ObtenerSuscripcionPorGuidAsync(string guid, CancellationToken cancellationToken);
+    Task<Estatus?> ObtenerEstatusPorIdYGuidAsync(int id, string guid, CancellationToken cancellationToken);
     Task<bool> ExisteRegimenFiscalAsync(int id, CancellationToken cancellationToken);
     Task<bool> DescontarTimbrePorRfcAsync(string rfc, CancellationToken cancellationToken);
     Task CrearRegistroInicialAsync(
@@ -17,6 +19,7 @@ public interface IEntidadFiscalRepository
         EntidadFiscal entidadFiscal,
         RedComercialEntidadFiscal relacion,
         Accounts account,
+        OrdenCompraSuscripcion ordenCompra,
         CancellationToken cancellationToken);
     Task GuardarCambiosAsync(CancellationToken cancellationToken);
     Task EliminarAsync(EntidadFiscal entidadFiscal, CancellationToken cancellationToken);

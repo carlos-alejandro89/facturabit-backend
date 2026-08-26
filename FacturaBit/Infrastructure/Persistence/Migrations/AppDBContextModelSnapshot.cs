@@ -97,6 +97,39 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
                     b.ToTable("accounts", (string)null);
                 });
 
+            modelBuilder.Entity("FacturaBit.Domain.Entities.CanalPago", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Canal")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("canal");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Guid")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("guid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_canales_pagos");
+
+                    b.ToTable("canales_pagos", (string)null);
+                });
+
             modelBuilder.Entity("FacturaBit.Domain.Entities.CertificadoSelloDigital", b =>
                 {
                     b.Property<int>("Id")
@@ -504,7 +537,106 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
                             Guid = "f83c67c9-6d73-404f-e637-4837e657f911",
                             NombreEstatus = "ERROR",
                             UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            DescripcionEstatus = "La operación se completó satisfactoriamente.",
+                            Guid = "a9c3ee31-6bb3-4e4c-8d12-80a455bd635f",
+                            NombreEstatus = "COMPLETADA",
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 10,
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            DescripcionEstatus = "El importe de la operación fue reembolsado al cliente.",
+                            Guid = "a00daf3a-eaed-48c9-bc4d-247013e48980",
+                            NombreEstatus = "REEMBOLSADA",
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
                         });
+                });
+
+            modelBuilder.Entity("FacturaBit.Domain.Entities.OrdenCompraSuscripcion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CanalId")
+                        .HasColumnType("integer")
+                        .HasColumnName("canal_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("EstatusId")
+                        .HasColumnType("integer")
+                        .HasColumnName("estatus_id");
+
+                    b.Property<string>("Folio")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("folio");
+
+                    b.Property<string>("Guid")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("guid");
+
+                    b.Property<decimal>("Iva")
+                        .HasColumnType("numeric")
+                        .HasColumnName("iva");
+
+                    b.Property<int>("RedComercialId")
+                        .HasColumnType("integer")
+                        .HasColumnName("red_comercial_id");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("numeric")
+                        .HasColumnName("subtotal");
+
+                    b.Property<int>("SuscripcionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("suscripcion_id");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("numeric")
+                        .HasColumnName("total");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ordenes_compra_suscripcion");
+
+                    b.HasIndex("CanalId")
+                        .HasDatabaseName("ix_ordenes_compra_suscripcion_canal_id");
+
+                    b.HasIndex("EstatusId")
+                        .HasDatabaseName("ix_ordenes_compra_suscripcion_estatus_id");
+
+                    b.HasIndex("Folio")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ordenes_compra_suscripcion_folio");
+
+                    b.HasIndex("Guid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ordenes_compra_suscripcion_guid");
+
+                    b.HasIndex("RedComercialId")
+                        .HasDatabaseName("ix_ordenes_compra_suscripcion_red_comercial_id");
+
+                    b.HasIndex("SuscripcionId")
+                        .HasDatabaseName("ix_ordenes_compra_suscripcion_suscripcion_id");
+
+                    b.ToTable("ordenes_compra_suscripcion", (string)null);
                 });
 
             modelBuilder.Entity("FacturaBit.Domain.Entities.RedComercial", b =>
@@ -884,6 +1016,110 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("FacturaBit.Domain.Entities.Suscripcion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Caracteristicas")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("caracteristicas");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("codigo");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Guid")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("guid");
+
+                    b.Property<string>("NombreSuscripcion")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nombre_suscripcion");
+
+                    b.Property<decimal>("Precio")
+                        .HasColumnType("numeric")
+                        .HasColumnName("precio");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_suscripciones");
+
+                    b.ToTable("suscripciones", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Caracteristicas = "{\"TimbresIncluidos\":50,\"EmisoresIncluidos\":1,\"Vigencia\":7,\"UnidadVigencia\":\"D\\u00EDas\",\"SoportePrioritario\":false,\"RespaldoCfdi\":false,\"AccesoApi\":false,\"Recomendado\":false}",
+                            Codigo = "FREE",
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            Guid = "4ea467b7-58a0-47ad-8310-bf5575af103e",
+                            NombreSuscripcion = "Prueba gratuita 7 días",
+                            Precio = 0m,
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Caracteristicas = "{\"TimbresIncluidos\":100,\"EmisoresIncluidos\":1,\"Vigencia\":1,\"UnidadVigencia\":\"A\\u00F1os\",\"SoportePrioritario\":false,\"RespaldoCfdi\":false,\"AccesoApi\":false,\"Recomendado\":false}",
+                            Codigo = "INICIAL",
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            Guid = "be8919b2-e842-46ed-a172-746967a639f6",
+                            NombreSuscripcion = "Plan Inicial",
+                            Precio = 649m,
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Caracteristicas = "{\"TimbresIncluidos\":200,\"EmisoresIncluidos\":3,\"Vigencia\":1,\"UnidadVigencia\":\"A\\u00F1os\",\"SoportePrioritario\":false,\"RespaldoCfdi\":false,\"AccesoApi\":false,\"Recomendado\":false}",
+                            Codigo = "BASICO",
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            Guid = "2317a364-c2f9-4651-ad32-1f2fb4a86ade",
+                            NombreSuscripcion = "Plan Básico",
+                            Precio = 1099m,
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Caracteristicas = "{\"TimbresIncluidos\":500,\"EmisoresIncluidos\":10,\"Vigencia\":2,\"UnidadVigencia\":\"A\\u00F1os\",\"SoportePrioritario\":true,\"RespaldoCfdi\":true,\"AccesoApi\":true,\"Recomendado\":true}",
+                            Codigo = "PRO",
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            Guid = "a5c16c34-605d-4b79-ad61-18c53fff0b5a",
+                            NombreSuscripcion = "Plan PRO",
+                            Precio = 1999m,
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Caracteristicas = "{\"TimbresIncluidos\":1000,\"EmisoresIncluidos\":-1,\"Vigencia\":2,\"UnidadVigencia\":\"A\\u00F1os\",\"SoportePrioritario\":true,\"RespaldoCfdi\":true,\"AccesoApi\":true,\"Recomendado\":false}",
+                            Codigo = "PREMIUM",
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            Guid = "e5e2bcac-0412-4f73-b2ba-bc5ee1e580d8",
+                            NombreSuscripcion = "Premium",
+                            Precio = 3299m,
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        });
+                });
+
             modelBuilder.Entity("FacturaBit.Domain.Entities.Accounts", b =>
                 {
                     b.HasOne("FacturaBit.Domain.Entities.RedComercial", "RedComercial")
@@ -954,6 +1190,44 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_entidades_fiscales_sat_regimen_fiscal_sat_regimen_fiscal_id");
 
                     b.Navigation("SatRegimenFiscal");
+                });
+
+            modelBuilder.Entity("FacturaBit.Domain.Entities.OrdenCompraSuscripcion", b =>
+                {
+                    b.HasOne("FacturaBit.Domain.Entities.CanalPago", "Canal")
+                        .WithMany()
+                        .HasForeignKey("CanalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_ordenes_compra_suscripcion_canales_pagos_canal_id");
+
+                    b.HasOne("FacturaBit.Domain.Entities.Estatus", "Estatus")
+                        .WithMany()
+                        .HasForeignKey("EstatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_ordenes_compra_suscripcion_estatus_estatus_id");
+
+                    b.HasOne("FacturaBit.Domain.Entities.RedComercial", "RedComercial")
+                        .WithMany()
+                        .HasForeignKey("RedComercialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_ordenes_compra_suscripcion_redes_comeciales_red_comercial_id");
+
+                    b.HasOne("FacturaBit.Domain.Entities.Suscripcion", "Suscripcion")
+                        .WithMany()
+                        .HasForeignKey("SuscripcionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_ordenes_compra_suscripcion_suscripciones_suscripcion_id");
+
+                    b.Navigation("Canal");
+
+                    b.Navigation("Estatus");
+
+                    b.Navigation("RedComercial");
+
+                    b.Navigation("Suscripcion");
                 });
 
             modelBuilder.Entity("FacturaBit.Domain.Entities.RedComercialEntidadFiscal", b =>

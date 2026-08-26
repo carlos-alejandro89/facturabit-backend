@@ -6,4 +6,5 @@ public interface IPasswordService
 {
     string GenerarPasswordTemporal();
     string CrearHash(Accounts account, string password);
+    bool Verificar(Accounts account, string password);
 }

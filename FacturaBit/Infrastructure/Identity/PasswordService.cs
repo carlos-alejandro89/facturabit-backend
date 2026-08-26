@@ -19,6 +19,17 @@ public sealed class PasswordService : IPasswordService
         return _passwordHasher.HashPassword(account, password);
     }
 
+    public bool Verificar(Accounts account, string password)
+    {
+        PasswordVerificationResult result = _passwordHasher.VerifyHashedPassword(
+            account,
+            account.Password,
+            password);
+
+        return result is PasswordVerificationResult.Success
+            or PasswordVerificationResult.SuccessRehashNeeded;
+    }
+
     public string GenerarPasswordTemporal()
     {
         const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";

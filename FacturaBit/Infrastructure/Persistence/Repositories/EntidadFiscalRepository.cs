@@ -66,6 +66,25 @@ public sealed class EntidadFiscalRepository : IEntidadFiscalRepository
         return _dbContext.Set<Rol>().SingleOrDefaultAsync(role => role.Nombre == nombre, cancellationToken);
     }
 
+    public Task<Suscripcion?> ObtenerSuscripcionPorGuidAsync(string guid, CancellationToken cancellationToken)
+    {
+        string normalizedGuid = guid.Trim().ToLowerInvariant();
+        return _dbContext.Set<Suscripcion>()
+            .SingleOrDefaultAsync(item => item.Guid.ToLower() == normalizedGuid, cancellationToken);
+    }
+
+    public Task<Estatus?> ObtenerEstatusPorIdYGuidAsync(
+        int id,
+        string guid,
+        CancellationToken cancellationToken)
+    {
+        string normalizedGuid = guid.Trim().ToLowerInvariant();
+        return _dbContext.Set<Estatus>()
+            .SingleOrDefaultAsync(
+                item => item.Id == id && item.Guid.ToLower() == normalizedGuid,
+                cancellationToken);
+    }
+
     public Task<bool> ExisteRegimenFiscalAsync(int id, CancellationToken cancellationToken)
     {
         return _dbContext.Set<SatRegimenFiscal>().AnyAsync(item => item.Id == id, cancellationToken);
@@ -94,10 +113,11 @@ public sealed class EntidadFiscalRepository : IEntidadFiscalRepository
         EntidadFiscal entidadFiscal,
         RedComercialEntidadFiscal relacion,
         Accounts account,
+        OrdenCompraSuscripcion ordenCompra,
         CancellationToken cancellationToken)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        _dbContext.AddRange(redComercial, entidadFiscal, relacion, account);
+        _dbContext.AddRange(redComercial, entidadFiscal, relacion, account, ordenCompra);
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }

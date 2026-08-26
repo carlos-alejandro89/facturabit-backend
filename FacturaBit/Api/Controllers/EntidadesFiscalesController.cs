@@ -3,11 +3,13 @@ using FacturaBit.Api.Contracts.Responses;
 using FacturaBit.Application.Abstractions;
 using FacturaBit.Application.DTOs;
 using FacturaBit.Application.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FacturaBit.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/entidades-fiscales")]
 public sealed class EntidadesFiscalesController : ControllerBase
 {
@@ -38,6 +40,7 @@ public sealed class EntidadesFiscalesController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<CrearEntidadFiscalDto>>> Crear(
         CrearEntidadFiscalRequest request,
         CancellationToken cancellationToken)
@@ -49,12 +52,13 @@ public sealed class EntidadesFiscalesController : ControllerBase
                 NombreRedComercial = request.NombreRedComercial,
                 FullName = request.FullName,
                 Email = request.Email,
-                Telefono = request.Telefono
+                Telefono = request.Telefono,
+                SuscripcionGuid = request.SuscripcionGuid
             }, cancellationToken);
 
             ApiResponse<CrearEntidadFiscalDto> response = Respuesta(
                 true,
-                "Entidad fiscal y cuenta SuperAdministrador creadas correctamente.",
+                "Entidad fiscal, cuenta SuperAdministrador y orden de compra creadas correctamente.",
                 StatusCodes.Status201Created,
                 created);
 

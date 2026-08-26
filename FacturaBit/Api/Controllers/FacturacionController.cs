@@ -3,10 +3,12 @@ using FacturaBit.Application.Abstractions;
 using FacturaBit.Application.DTOs;
 using FacturaBit.Application.Exceptions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FacturaBit.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/facturacion")]
 public sealed class FacturacionController : ControllerBase
 {

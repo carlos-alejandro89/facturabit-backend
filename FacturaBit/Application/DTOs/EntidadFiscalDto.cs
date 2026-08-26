@@ -29,6 +29,8 @@ public sealed class CrearEntidadFiscalDto
     public required EntidadFiscalDto EntidadFiscal { get; init; }
     public required string PasswordTemporal { get; init; }
     public DateTime PasswordExpiresAt { get; init; }
+    public required string OrdenCompraGuid { get; init; }
+    public required string FolioOrdenCompra { get; init; }
 }
 
 public sealed class CrearEntidadFiscalCommandDto
@@ -37,6 +39,7 @@ public sealed class CrearEntidadFiscalCommandDto
     public required string FullName { get; init; }
     public required string Email { get; init; }
     public required string Telefono { get; init; }
+    public required string SuscripcionGuid { get; init; }
 }
 
 public sealed class ActualizarEntidadFiscalDto

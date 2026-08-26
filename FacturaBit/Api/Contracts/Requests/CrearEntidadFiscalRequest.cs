@@ -15,4 +15,7 @@ public sealed class CrearEntidadFiscalRequest
 
     [Required, MaxLength(30)]
     public string Telefono { get; init; } = string.Empty;
+    
+    [Required, MaxLength(36)]
+    public string SuscripcionGuid { get; init; } = string.Empty;
 }

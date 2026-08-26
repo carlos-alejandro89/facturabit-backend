@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 using FacturaBit.Domain.Entities;
 using FacturaBit.Domain.Interfaces;
 using FacturaBit.Infrastructure.Persistence.Seeders;
@@ -56,6 +57,38 @@ public class AppDBContext  : DbContext
         modelBuilder.Entity<Accounts>().HasIndex(item => item.Guid).IsUnique();
         modelBuilder.Entity<Accounts>().HasIndex(item => item.Email).IsUnique();
         modelBuilder.Entity<ComprobanteFiscal>().HasIndex(item => item.Guid).IsUnique();
+
+        modelBuilder.Entity<OrdenCompraSuscripcion>(entity =>
+        {
+            entity.HasIndex(item => item.Guid).IsUnique();
+            entity.HasIndex(item => item.Folio).IsUnique();
+
+            entity.HasOne(item => item.RedComercial)
+                .WithMany()
+                .HasForeignKey(item => item.RedComercialId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(item => item.Estatus)
+                .WithMany()
+                .HasForeignKey(item => item.EstatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(item => item.Suscripcion)
+                .WithMany()
+                .HasForeignKey(item => item.SuscripcionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(item => item.Canal)
+                .WithMany()
+                .HasForeignKey(item => item.CanalId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Suscripcion>()
+            .Property(item => item.Caracteristicas)
+            .HasConversion(
+                value => JsonSerializer.Serialize(value, JsonSerializerOptions.Default),
+                value => JsonSerializer.Deserialize<CaracteristicasSucripcion>(value, JsonSerializerOptions.Default)!);
 
         modelBuilder.Entity<ComprobanteFiscal>()
             .HasOne(item => item.EstatusCfdi)

@@ -8,6 +8,9 @@ namespace FacturaBit.Application.Features;
 public sealed class EntidadFiscalService : IEntidadFiscalService
 {
     private const string SuperAdministradorRole = "SUPERADMIN";
+    private const int EnProcesoStatusId = 5;
+    private const string EnProcesoStatusGuid = "c50f34f6-3a40-4d1c-b304-1504b324c6de";
+    private const decimal IvaRate = 0.16m;
     private readonly IEntidadFiscalRepository _repository;
     private readonly IPasswordService _passwordService;
 
@@ -47,6 +50,19 @@ public sealed class EntidadFiscalService : IEntidadFiscalService
         Rol role = await _repository.ObtenerRolPorNombreAsync(SuperAdministradorRole, cancellationToken)
             ?? throw new EntidadNoEncontradaException(
                 "No se encontró el rol SUPERADMIN. Verifique que RolesSeeder haya sido aplicado.");
+
+        Suscripcion suscripcion = await _repository.ObtenerSuscripcionPorGuidAsync(
+                request.SuscripcionGuid,
+                cancellationToken)
+            ?? throw new EntidadNoEncontradaException(
+                "La suscripción seleccionada no existe o ya no está disponible.");
+
+        Estatus enProceso = await _repository.ObtenerEstatusPorIdYGuidAsync(
+                EnProcesoStatusId,
+                EnProcesoStatusGuid,
+                cancellationToken)
+            ?? throw new EntidadNoEncontradaException(
+                "No se encontró el estatus EN PROCESO. Verifique que EstatusSeeder haya sido aplicado.");
 
         DateTime now = DateTime.UtcNow;
         string temporaryPassword = _passwordService.GenerarPasswordTemporal();
@@ -95,18 +111,41 @@ public sealed class EntidadFiscalService : IEntidadFiscalService
         };
         account.Password = _passwordService.CrearHash(account, temporaryPassword);
 
+        decimal total = suscripcion.Precio;
+        decimal subtotal = Math.Round(total / (1m + IvaRate), 2, MidpointRounding.AwayFromZero);
+        decimal iva = total - subtotal;
+        string orderToken = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+
+        OrdenCompraSuscripcion ordenCompra = new()
+        {
+            Folio = $"OC-{now:yyyyMMddHHmmss}-{orderToken}",
+            RedComercial = redComercial,
+            Estatus = enProceso,
+            Suscripcion = suscripcion,
+            CanalId = null,
+            Subtotal = subtotal,
+            Iva = iva,
+            Total = total,
+            Guid = Guid.NewGuid().ToString(),
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
         await _repository.CrearRegistroInicialAsync(
             redComercial,
             entidadFiscal,
             relation,
             account,
+            ordenCompra,
             cancellationToken);
 
         return new CrearEntidadFiscalDto
         {
             EntidadFiscal = Mapear(entidadFiscal),
             PasswordTemporal = temporaryPassword,
-            PasswordExpiresAt = account.PasswordExpiresAt
+            PasswordExpiresAt = account.PasswordExpiresAt,
+            OrdenCompraGuid = ordenCompra.Guid,
+            FolioOrdenCompra = ordenCompra.Folio
         };
     }
 
