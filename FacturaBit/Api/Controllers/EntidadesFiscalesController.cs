@@ -5,6 +5,7 @@ using FacturaBit.Application.DTOs;
 using FacturaBit.Application.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace FacturaBit.Api.Controllers;
 
@@ -24,7 +25,14 @@ public sealed class EntidadesFiscalesController : ControllerBase
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<EntidadFiscalDto>>>> ObtenerTodos(
         CancellationToken cancellationToken)
     {
-        IReadOnlyCollection<EntidadFiscalDto> entities = await _service.ObtenerTodosAsync(cancellationToken);
+        string? redComercialGuid = ObtenerRedComercialGuid();
+        if (redComercialGuid is null)
+        {
+            return Unauthorized(Respuesta<IReadOnlyCollection<EntidadFiscalDto>>(
+                false, "La sesión no contiene una organización válida.", StatusCodes.Status401Unauthorized, null));
+        }
+
+        IReadOnlyCollection<EntidadFiscalDto> entities = await _service.ObtenerPorRedComercialAsync(redComercialGuid, cancellationToken);
         return Ok(Respuesta(true, "Entidades fiscales obtenidas correctamente.", StatusCodes.Status200OK, entities));
     }
 
@@ -33,10 +41,69 @@ public sealed class EntidadesFiscalesController : ControllerBase
         string guid,
         CancellationToken cancellationToken)
     {
-        EntidadFiscalDto? entity = await _service.ObtenerPorGuidAsync(guid, cancellationToken);
+        string? redComercialGuid = ObtenerRedComercialGuid();
+        if (redComercialGuid is null)
+        {
+            return Unauthorized(Respuesta<EntidadFiscalDto>(
+                false, "La sesión no contiene una organización válida.", StatusCodes.Status401Unauthorized, null));
+        }
+
+        EntidadFiscalDto? entity = await _service.ObtenerPorGuidAsync(guid, redComercialGuid, cancellationToken);
         return entity is null
             ? NotFound(Respuesta<EntidadFiscalDto>(false, "La entidad fiscal no existe.", StatusCodes.Status404NotFound, null))
             : Ok(Respuesta(true, "Entidad fiscal obtenida correctamente.", StatusCodes.Status200OK, entity));
+    }
+
+    [HttpPut("emisores")]
+    public async Task<ActionResult<ApiResponse<EntidadFiscalDto>>> Upsert(
+        UpsertEntidadFiscalRequest request,
+        CancellationToken cancellationToken)
+    {
+        string? redComercialGuid = ObtenerRedComercialGuid();
+        if (redComercialGuid is null)
+        {
+            return Unauthorized(Respuesta<EntidadFiscalDto>(
+                false, "La sesión no contiene una organización válida.", StatusCodes.Status401Unauthorized, null));
+        }
+
+        try
+        {
+            bool isNew = string.IsNullOrWhiteSpace(request.Guid);
+            EntidadFiscalDto entity = await _service.UpsertAsync(redComercialGuid, new UpsertEntidadFiscalDto
+            {
+                Guid = request.Guid,
+                EsPrepago = request.EsPrepago,
+                SatRegimenFiscalId = request.SatRegimenFiscalId,
+                RazonSocial = request.RazonSocial,
+                Rfc = request.Rfc,
+                RegistroPatronal = request.RegistroPatronal,
+                Calle = request.Calle,
+                NumExt = request.NumExt,
+                NumInt = request.NumInt,
+                Colonia = request.Colonia,
+                Ciudad = request.Ciudad,
+                Estado = request.Estado,
+                CodigoPostal = request.CodigoPostal,
+                NombreComercial = request.NombreComercial,
+                TelefonoComercial = request.TelefonoComercial,
+                TelefonoComercial2 = request.TelefonoComercial2,
+                CorreoComercial = request.CorreoComercial
+            }, cancellationToken);
+
+            return Ok(Respuesta(
+                true,
+                isNew ? "Emisor creado correctamente." : "Emisor actualizado correctamente.",
+                StatusCodes.Status200OK,
+                entity));
+        }
+        catch (EntidadNoEncontradaException exception)
+        {
+            return NotFound(Respuesta<EntidadFiscalDto>(false, exception.Message, StatusCodes.Status404NotFound, null));
+        }
+        catch (ConflictoException exception)
+        {
+            return Conflict(Respuesta<EntidadFiscalDto>(false, exception.Message, StatusCodes.Status409Conflict, null));
+        }
     }
 
     [HttpPost]
@@ -82,10 +149,18 @@ public sealed class EntidadesFiscalesController : ControllerBase
         ActualizarEntidadFiscalRequest request,
         CancellationToken cancellationToken)
     {
+        string? redComercialGuid = ObtenerRedComercialGuid();
+        if (redComercialGuid is null)
+        {
+            return Unauthorized(Respuesta<EntidadFiscalDto>(
+                false, "La sesión no contiene una organización válida.", StatusCodes.Status401Unauthorized, null));
+        }
+
         try
         {
-            EntidadFiscalDto? updated = await _service.ActualizarAsync(guid, new ActualizarEntidadFiscalDto
+            EntidadFiscalDto updated = await _service.UpsertAsync(redComercialGuid, new UpsertEntidadFiscalDto
             {
+                Guid = guid,
                 EsPrepago = request.EsPrepago,
                 SatRegimenFiscalId = request.SatRegimenFiscalId,
                 RazonSocial = request.RazonSocial,
@@ -104,21 +179,31 @@ public sealed class EntidadesFiscalesController : ControllerBase
                 CorreoComercial = request.CorreoComercial
             }, cancellationToken);
 
-            return updated is null
-                ? NotFound(Respuesta<EntidadFiscalDto>(false, "La entidad fiscal no existe.", StatusCodes.Status404NotFound, null))
-                : Ok(Respuesta(true, "Entidad fiscal actualizada correctamente.", StatusCodes.Status200OK, updated));
+            return Ok(Respuesta(true, "Entidad fiscal actualizada correctamente.", StatusCodes.Status200OK, updated));
         }
         catch (EntidadNoEncontradaException exception)
         {
             return NotFound(Respuesta<EntidadFiscalDto>(
                 false, exception.Message, StatusCodes.Status404NotFound, null));
         }
+        catch (ConflictoException exception)
+        {
+            return Conflict(Respuesta<EntidadFiscalDto>(
+                false, exception.Message, StatusCodes.Status409Conflict, null));
+        }
     }
 
     [HttpDelete("{guid}")]
     public async Task<ActionResult<ApiResponse<bool>>> Eliminar(string guid, CancellationToken cancellationToken)
     {
-        bool deleted = await _service.EliminarAsync(guid, cancellationToken);
+        string? redComercialGuid = ObtenerRedComercialGuid();
+        if (redComercialGuid is null)
+        {
+            return Unauthorized(Respuesta<bool>(
+                false, "La sesión no contiene una organización válida.", StatusCodes.Status401Unauthorized, false));
+        }
+
+        bool deleted = await _service.EliminarAsync(guid, redComercialGuid, cancellationToken);
         return deleted
             ? Ok(Respuesta(true, "Entidad fiscal eliminada correctamente.", StatusCodes.Status200OK, true))
             : NotFound(Respuesta<bool>(false, "La entidad fiscal no existe.", StatusCodes.Status404NotFound, false));
@@ -134,4 +219,6 @@ public sealed class EntidadesFiscalesController : ControllerBase
             Data = data
         };
     }
+
+    private string? ObtenerRedComercialGuid() => User.FindFirstValue("red_comercial_guid");
 }

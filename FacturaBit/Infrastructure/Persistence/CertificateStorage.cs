@@ -85,6 +85,16 @@ public sealed partial class CertificateStorage : ICertificateStorage
         await File.WriteAllTextAsync(path, xml, new UTF8Encoding(false), cancellationToken);
     }
 
+    public async Task<string?> LeerCfdiAsync(string relativePath, CancellationToken cancellationToken)
+    {
+        string contentRoot = Path.GetFullPath(Path.GetDirectoryName(_rootPath)!);
+        string fullPath = Path.GetFullPath(Path.Combine(contentRoot, relativePath));
+        if (!fullPath.StartsWith(_rootPath + Path.DirectorySeparatorChar, StringComparison.Ordinal) ||
+            !string.Equals(Path.GetExtension(fullPath), ".xml", StringComparison.OrdinalIgnoreCase) ||
+            !File.Exists(fullPath)) return null;
+        return await File.ReadAllTextAsync(fullPath, cancellationToken);
+    }
+
     private static string ObtenerPrefijoUuid(string uuid)
     {
         string normalizedUuid = uuid.Trim();

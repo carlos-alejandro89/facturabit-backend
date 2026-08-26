@@ -21,4 +21,5 @@ public interface ICertificateStorage
         string uuid,
         string xml,
         CancellationToken cancellationToken);
+    Task<string?> LeerCfdiAsync(string relativePath, CancellationToken cancellationToken);
 }

@@ -1,11 +1,13 @@
 using FacturaBit.Api.Contracts.Responses;
 using FacturaBit.Api.Contracts.Requests;
 using FacturaBit.Application.Abstractions;
+using FacturaBit.Application.DTOs;
 using FacturaBit.Infrastructure.Security.Cryptography;
 using FacturaBit.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Cryptography;
+using System.Security.Claims;
 
 namespace FacturaBit.Api.Controllers;
 
@@ -18,17 +20,61 @@ public sealed class EmisoresController : ControllerBase
     private readonly OpenSSL _openSsl;
     private readonly ICertificadoSelloDigitalRepository _repository;
     private readonly IAesEncryptionService _encryptionService;
+    private readonly ICertificadoDigitalService _certificateService;
 
     public EmisoresController(
         ICertificateStorage certificateStorage,
         OpenSSL openSsl,
         ICertificadoSelloDigitalRepository repository,
-        IAesEncryptionService encryptionService)
+        IAesEncryptionService encryptionService,
+        ICertificadoDigitalService certificateService)
     {
         _certificateStorage = certificateStorage;
         _openSsl = openSsl;
         _repository = repository;
         _encryptionService = encryptionService;
+        _certificateService = certificateService;
+    }
+
+    [HttpGet("{rfc}/certificados")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<CertificadoDigitalDto>>>> ObtenerCertificados(
+        string rfc,
+        CancellationToken cancellationToken)
+    {
+        string? redComercialGuid = User.FindFirstValue("red_comercial_guid");
+        if (string.IsNullOrWhiteSpace(redComercialGuid))
+        {
+            return Unauthorized(new ApiResponse<IReadOnlyCollection<CertificadoDigitalDto>>
+            {
+                Success = false,
+                Mensaje = "La sesión no contiene una organización válida.",
+                HttpCode = StatusCodes.Status401Unauthorized
+            });
+        }
+
+        IReadOnlyCollection<CertificadoDigitalDto>? certificados =
+            await _certificateService.ObtenerPorEmisorAsync(
+                _certificateStorage.NormalizarRfc(rfc),
+                redComercialGuid,
+                cancellationToken);
+
+        if (certificados is null)
+        {
+            return NotFound(new ApiResponse<IReadOnlyCollection<CertificadoDigitalDto>>
+            {
+                Success = false,
+                Mensaje = "El emisor no existe o no pertenece a la organización actual.",
+                HttpCode = StatusCodes.Status404NotFound
+            });
+        }
+
+        return Ok(new ApiResponse<IReadOnlyCollection<CertificadoDigitalDto>>
+        {
+            Success = true,
+            Mensaje = "Certificados digitales obtenidos correctamente.",
+            HttpCode = StatusCodes.Status200OK,
+            Data = certificados
+        });
     }
 
     [HttpPost("{rfc}/certificado")]
@@ -65,14 +111,24 @@ public sealed class EmisoresController : ControllerBase
 
         try
         {
+            string? redComercialGuid = User.FindFirstValue("red_comercial_guid");
+            if (string.IsNullOrWhiteSpace(redComercialGuid))
+            {
+                return Unauthorized(CrearRespuestaError(
+                    "La sesión no contiene una organización válida.",
+                    StatusCodes.Status401Unauthorized));
+            }
+
             string normalizedRfc = _certificateStorage.NormalizarRfc(rfc);
-            EntidadFiscal? entidadFiscal = await _repository.ObtenerEntidadFiscalPorRfcAsync(
+            EntidadFiscal? entidadFiscal = await _repository.ObtenerEntidadFiscalPorRfcYRedComercialAsync(
                 normalizedRfc,
+                redComercialGuid,
                 cancellationToken);
             if (entidadFiscal is null)
             {
-                return BadRequest(CrearRespuestaError(
-                    "No existe una entidad fiscal registrada con el RFC proporcionado."));
+                return NotFound(CrearRespuestaError(
+                    "El emisor no existe o no pertenece a la organización actual.",
+                    StatusCodes.Status404NotFound));
             }
 
             string storedFileName = $"{normalizedRfc}.cer";
@@ -199,13 +255,15 @@ public sealed class EmisoresController : ControllerBase
         };
     }
 
-    private static ApiResponse<CertificadoResponse> CrearRespuestaError(string mensaje)
+    private static ApiResponse<CertificadoResponse> CrearRespuestaError(
+        string mensaje,
+        int httpCode = StatusCodes.Status400BadRequest)
     {
         return new ApiResponse<CertificadoResponse>
         {
             Success = false,
             Mensaje = mensaje,
-            HttpCode = StatusCodes.Status400BadRequest,
+            HttpCode = httpCode,
             Data = null
         };
     }

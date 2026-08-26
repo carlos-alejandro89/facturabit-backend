@@ -16,6 +16,69 @@ public sealed class ComprobanteFiscalRepository : IComprobanteFiscalRepository
         _dbContext = dbContext;
     }
 
+    public async Task<(IReadOnlyCollection<ComprobanteFiscal> Items, int Total)> ObtenerPorRedComercialAsync(
+        string redComercialGuid,
+        string? emisorGuid,
+        string? busqueda,
+        string? estatus,
+        int pagina,
+        int tamanoPagina,
+        CancellationToken cancellationToken)
+    {
+        IQueryable<ComprobanteFiscal> query = _dbContext.Set<ComprobanteFiscal>()
+            .AsNoTracking()
+            .Include(item => item.EntidadFiscal)
+            .Include(item => item.EstatusCfdi)
+            .Where(item => item.EntidadFiscal.RedesComerciales
+                .Any(relation => relation.RedComercial.Guid == redComercialGuid));
+
+        if (!string.IsNullOrWhiteSpace(emisorGuid))
+            query = query.Where(item => item.EntidadFiscal.Guid == emisorGuid);
+
+        if (!string.IsNullOrWhiteSpace(busqueda))
+        {
+            string term = busqueda.Trim().ToUpper();
+            query = query.Where(item =>
+                item.Folio.ToUpper().Contains(term) ||
+                (item.SerieCfdi != null && item.SerieCfdi.ToUpper().Contains(term)) ||
+                item.ReceptorNombre.ToUpper().Contains(term) ||
+                item.ReceptorRfc.ToUpper().Contains(term) ||
+                item.EntidadFiscal.Rfc.ToUpper().Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(estatus))
+        {
+            string status = estatus.Trim().ToUpper();
+            query = status == "EN PROCESO"
+                ? query.Where(item => item.EstatusCfdi.NombreEstatus == "EN PROCESO" ||
+                                      item.EstatusCfdi.NombreEstatus == "SOLICITUD TIMBRADO")
+                : query.Where(item => item.EstatusCfdi.NombreEstatus.ToUpper() == status);
+        }
+
+        int total = await query.CountAsync(cancellationToken);
+        ComprobanteFiscal[] items = await query
+            .OrderByDescending(item => item.CreatedAt)
+            .Skip((pagina - 1) * tamanoPagina)
+            .Take(tamanoPagina)
+            .ToArrayAsync(cancellationToken);
+
+        return (items, total);
+    }
+
+    public Task<ComprobanteFiscal?> ObtenerPorGuidYRedComercialAsync(
+        string guid,
+        string redComercialGuid,
+        CancellationToken cancellationToken)
+    {
+        return _dbContext.Set<ComprobanteFiscal>()
+            .AsNoTracking()
+            .Include(item => item.EntidadFiscal)
+            .Include(item => item.EstatusCfdi)
+            .SingleOrDefaultAsync(item => item.Guid == guid &&
+                item.EntidadFiscal.RedesComerciales.Any(relation =>
+                    relation.RedComercial.Guid == redComercialGuid), cancellationToken);
+    }
+
     public async Task InsertarAsync(ComprobanteFiscal comprobante, CancellationToken cancellationToken)
     {
         _dbContext.Add(comprobante);

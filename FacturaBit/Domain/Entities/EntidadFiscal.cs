@@ -40,4 +40,5 @@ namespace FacturaBit.Domain.Entities;
 
         public SatRegimenFiscal? SatRegimenFiscal { get; set; }
         public ICollection<RedComercialEntidadFiscal> RedesComerciales { get; set; } = [];
+        public ICollection<CertificadoSelloDigital> Certificados { get; set; } = [];
     }

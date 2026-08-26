@@ -21,6 +21,50 @@ public sealed class EntidadFiscalRepository : IEntidadFiscalRepository
             .ToArrayAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<EntidadFiscal>> ObtenerPorRedComercialGuidAsync(
+        string redComercialGuid,
+        CancellationToken cancellationToken)
+    {
+        return await _dbContext.Set<EntidadFiscal>()
+            .AsNoTracking()
+            .Include(entity => entity.SatRegimenFiscal)
+            .Include(entity => entity.Certificados)
+            .Where(entity => entity.RedesComerciales.Any(relation => relation.RedComercial.Guid == redComercialGuid))
+            .OrderBy(entity => entity.RazonSocial)
+            .ToArrayAsync(cancellationToken);
+    }
+
+    public Task<EntidadFiscal?> ObtenerPorGuidYRedComercialGuidAsync(
+        string guid,
+        string redComercialGuid,
+        bool tracking,
+        CancellationToken cancellationToken)
+    {
+        IQueryable<EntidadFiscal> query = _dbContext.Set<EntidadFiscal>()
+            .Include(entity => entity.SatRegimenFiscal)
+            .Include(entity => entity.Certificados)
+            .Where(entity => entity.Guid == guid
+                && entity.RedesComerciales.Any(relation => relation.RedComercial.Guid == redComercialGuid));
+
+        return (tracking ? query : query.AsNoTracking()).SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public Task<RedComercial?> ObtenerRedComercialPorGuidAsync(string guid, CancellationToken cancellationToken)
+    {
+        return _dbContext.Set<RedComercial>().SingleOrDefaultAsync(red => red.Guid == guid, cancellationToken);
+    }
+
+    public Task<bool> ExisteRfcEnOtraEntidadAsync(
+        string rfc,
+        string? entidadFiscalGuid,
+        CancellationToken cancellationToken)
+    {
+        string normalizedRfc = rfc.Trim().ToUpperInvariant();
+        return _dbContext.Set<EntidadFiscal>().AnyAsync(
+            entity => entity.Rfc.ToUpper() == normalizedRfc && entity.Guid != entidadFiscalGuid,
+            cancellationToken);
+    }
+
     public async Task<EntidadFiscal?> ObtenerPorGuidAsync(
         string guid,
         bool incluirRelaciones,
@@ -125,6 +169,15 @@ public sealed class EntidadFiscalRepository : IEntidadFiscalRepository
     public Task GuardarCambiosAsync(CancellationToken cancellationToken)
     {
         return _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task AgregarEntidadFiscalAsync(
+        EntidadFiscal entidadFiscal,
+        RedComercialEntidadFiscal relacion,
+        CancellationToken cancellationToken)
+    {
+        _dbContext.AddRange(entidadFiscal, relacion);
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task EliminarAsync(EntidadFiscal entidadFiscal, CancellationToken cancellationToken)
