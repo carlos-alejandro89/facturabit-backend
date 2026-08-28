@@ -97,6 +97,86 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
                     b.ToTable("accounts", (string)null);
                 });
 
+            modelBuilder.Entity("FacturaBit.Domain.Entities.ApiClient", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("activo");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("client_id");
+
+                    b.Property<string>("ClientSecretHash")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("client_secret_hash");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Guid")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasColumnName("guid");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_used_at");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("nombre");
+
+                    b.Property<int>("RedComercialId")
+                        .HasColumnType("integer")
+                        .HasColumnName("red_comercial_id");
+
+                    b.Property<string>("Scopes")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("scopes");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_api_clients");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_api_clients_client_id");
+
+                    b.HasIndex("Guid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_api_clients_guid");
+
+                    b.HasIndex("RedComercialId")
+                        .HasDatabaseName("ix_api_clients_red_comercial_id");
+
+                    b.ToTable("api_clients", (string)null);
+                });
+
             modelBuilder.Entity("FacturaBit.Domain.Entities.CanalPago", b =>
                 {
                     b.Property<int>("Id")
@@ -1141,10 +1221,22 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
                     b.Navigation("Rol");
                 });
 
+            modelBuilder.Entity("FacturaBit.Domain.Entities.ApiClient", b =>
+                {
+                    b.HasOne("FacturaBit.Domain.Entities.RedComercial", "RedComercial")
+                        .WithMany()
+                        .HasForeignKey("RedComercialId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_api_clients_redes_comeciales_red_comercial_id");
+
+                    b.Navigation("RedComercial");
+                });
+
             modelBuilder.Entity("FacturaBit.Domain.Entities.CertificadoSelloDigital", b =>
                 {
                     b.HasOne("FacturaBit.Domain.Entities.EntidadFiscal", "EntidadFiscal")
-                        .WithMany()
+                        .WithMany("Certificados")
                         .HasForeignKey("EntidadFiscalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -1253,6 +1345,8 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("FacturaBit.Domain.Entities.EntidadFiscal", b =>
                 {
+                    b.Navigation("Certificados");
+
                     b.Navigation("RedesComerciales");
                 });
 

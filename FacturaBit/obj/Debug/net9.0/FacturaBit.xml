@@ -32,6 +32,30 @@
         <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.MigracionInicial.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:FacturaBit.Infrastructure.Persistence.Migrations.AddOAuthApiClients">
+            <inheritdoc />
+        </member>
+        <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.AddOAuthApiClients.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.AddOAuthApiClients.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.AddOAuthApiClients.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:FacturaBit.Infrastructure.Persistence.Migrations.AddOAuthApiClientConstraints">
+            <inheritdoc />
+        </member>
+        <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.AddOAuthApiClientConstraints.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.AddOAuthApiClientConstraints.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.AddOAuthApiClientConstraints.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:System.Text.RegularExpressions.Generated.RfcPattern_0">
             <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the RfcPattern method.</summary>
         </member>

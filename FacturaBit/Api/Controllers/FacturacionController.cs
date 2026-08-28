@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using FacturaBit.Api.Contracts.Responses;
 using FacturaBit.Application.Abstractions;
 using FacturaBit.Application.DTOs;
 using FacturaBit.Application.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FacturaBit.Api.Controllers;
 
@@ -13,15 +15,22 @@ namespace FacturaBit.Api.Controllers;
 public sealed class FacturacionController : ControllerBase
 {
     private readonly IFacturacionService _service;
+    private readonly IApiClientService _apiClientService;
     private readonly ILogger<FacturacionController> _logger;
 
-    public FacturacionController(IFacturacionService service, ILogger<FacturacionController> logger)
+    public FacturacionController(
+        IFacturacionService service,
+        IApiClientService apiClientService,
+        ILogger<FacturacionController> logger)
     {
         _service = service;
+        _apiClientService = apiClientService;
         _logger = logger;
     }
 
     [HttpPost("emitir-cfdi")]
+    [Authorize(Policy = "EmitirCfdi")]
+    [EnableRateLimiting("ApiClients")]
     public async Task<ActionResult<ApiResponse<FacturacionResultDto>>> EmitirCfdi(
         InvoiceModelDto invoice,
         [FromQuery] bool esGlobal = false,
@@ -29,6 +38,17 @@ public sealed class FacturacionController : ControllerBase
     {
         try
         {
+            if (string.Equals(User.FindFirstValue("auth_type"), "client_credentials", StringComparison.Ordinal))
+            {
+                string redComercialId = User.FindFirstValue("red_comercial_id") ?? string.Empty;
+                if (!await _apiClientService.PuedeEmitirAsync(redComercialId, invoice.RfcEmisor, cancellationToken))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, Respuesta<FacturacionResultDto>(false,
+                        "El emisor no pertenece a la organización asociada con estas credenciales.",
+                        StatusCodes.Status403Forbidden, null));
+                }
+            }
+
             FacturacionResultDto result = await _service.EmitirAsync(invoice, esGlobal, cancellationToken);
             return Ok(Respuesta(true, "CFDI timbrado correctamente.", StatusCodes.Status200OK, result));
         }
@@ -54,6 +74,7 @@ public sealed class FacturacionController : ControllerBase
     }
 
     [HttpPost("cancelar-cfdi")]
+    [Authorize(Roles = "SUPERADMIN,ADMIN,FACTURISTA")]
     public async Task<ActionResult<ApiResponse<CancelacionResultDto>>> CancelarCfdi(
         CancelacionDto cancelacion,
         CancellationToken cancellationToken)

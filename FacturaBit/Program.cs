@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using System.Threading.RateLimiting;
 using FacturaBit.Api.Contracts.Responses;
 using FacturaBit.Application.Abstractions;
 using FacturaBit.Application.Features;
@@ -12,6 +13,7 @@ using FacturaBit.Infrastructure.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -115,7 +117,41 @@ builder.Services.AddAuthentication(x =>
             ClockSkew = TimeSpan.Zero
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("EmitirCfdi", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(context =>
+        {
+            string? authType = context.User.FindFirst("auth_type")?.Value;
+            if (!string.Equals(authType, "client_credentials", StringComparison.Ordinal))
+                return context.User.IsInRole("SUPERADMIN") || context.User.IsInRole("ADMIN") || context.User.IsInRole("FACTURISTA");
+
+            string scope = context.User.FindFirst("scope")?.Value ?? string.Empty;
+            return scope.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains("cfdi.emit", StringComparer.Ordinal);
+        });
+    });
+});
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("ApiClients", context =>
+    {
+        string partitionKey = context.User.FindFirst("client_id")?.Value
+            ?? context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? context.Connection.RemoteIpAddress?.ToString()
+            ?? "anonymous";
+
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
+});
 
 builder.Services.AddScoped<FacturaBit.Infrastructure.Security.Cryptography.OpenSSL>();
 builder.Services.AddScoped<IEntidadFiscalService, EntidadFiscalService>();
@@ -124,6 +160,10 @@ builder.Services.AddScoped<ISatRegimenFiscalService, SatRegimenFiscalService>();
 builder.Services.AddScoped<ISatRegimenFiscalRepository, SatRegimenFiscalRepository>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+builder.Services.AddScoped<IApiClientService, ApiClientService>();
+builder.Services.AddScoped<IApiClientRepository, ApiClientRepository>();
+builder.Services.AddScoped<IApiClientSecretService, ApiClientSecretService>();
+builder.Services.AddSingleton<IApplicationTokenGenerator, ApplicationTokenGenerator>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddSingleton<IAesEncryptionService, AesGcmEncryptionService>();
@@ -132,6 +172,7 @@ builder.Services.AddScoped<ICertificadoDigitalService, CertificadoDigitalService
 builder.Services.AddScoped<IComprobanteFiscalRepository, ComprobanteFiscalRepository>();
 builder.Services.AddScoped<IComprobanteFiscalService, ComprobanteFiscalService>();
 builder.Services.AddScoped<IPasswordHasher<Accounts>, PasswordHasher<Accounts>>();
+builder.Services.AddScoped<IPasswordHasher<ApiClient>, PasswordHasher<ApiClient>>();
 builder.Services.AddScoped<ICertificateStorage, CertificateStorage>();
 builder.Services.AddScoped<ICfdiXmlBuilder, CfdiXmlBuilder>();
 builder.Services.AddScoped<ICfdiSigner, CfdiSigner>();
@@ -152,6 +193,7 @@ app.UseHttpsRedirection();
 app.UseCors("Frontend");
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -12,10 +12,12 @@ namespace FacturaBit.Api.Controllers;
 public sealed class AuthenticationController : ControllerBase
 {
     private readonly IAuthenticationService _authenticationService;
+    private readonly IApiClientService _apiClientService;
 
-    public AuthenticationController(IAuthenticationService authenticationService)
+    public AuthenticationController(IAuthenticationService authenticationService, IApiClientService apiClientService)
     {
         _authenticationService = authenticationService;
+        _apiClientService = apiClientService;
     }
 
     [AllowAnonymous]
@@ -50,5 +52,54 @@ public sealed class AuthenticationController : ControllerBase
             HttpCode = StatusCodes.Status200OK,
             Data = login
         });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("client-token")]
+    [HttpPost("/oauth/token")]
+    [Consumes("application/x-www-form-urlencoded")]
+    [ProducesResponseType(typeof(OAuthTokenResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ClientToken([FromForm] ClientCredentialsTokenRequest request, CancellationToken cancellationToken)
+    {
+        if (!string.Equals(request.GrantType, "client_credentials", StringComparison.Ordinal))
+            return BadRequest(new { error = "unsupported_grant_type", error_description = "grant_type debe ser client_credentials." });
+
+        (string? clientId, string? clientSecret) = ObtenerCredencialesBasicas();
+        clientId ??= request.ClientId;
+        clientSecret ??= request.ClientSecret;
+        if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret))
+            return InvalidClient();
+
+        try
+        {
+            ClientAccessTokenDto? token = await _apiClientService.AutenticarAsync(clientId, clientSecret, request.Scope, cancellationToken);
+            if (token is null) return InvalidClient();
+            Response.Headers.CacheControl = "no-store";
+            Response.Headers.Pragma = "no-cache";
+            return Ok(new OAuthTokenResponse(token.AccessToken, "Bearer", token.ExpiresIn, token.Scope));
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new { error = "invalid_scope", error_description = exception.Message });
+        }
+    }
+
+    private IActionResult InvalidClient()
+    {
+        Response.Headers.WWWAuthenticate = "Basic realm=\"FacturaBit OAuth\"";
+        return Unauthorized(new { error = "invalid_client", error_description = "Las credenciales de aplicación no son válidas." });
+    }
+
+    private (string? ClientId, string? ClientSecret) ObtenerCredencialesBasicas()
+    {
+        string authorization = Request.Headers.Authorization.ToString();
+        if (!authorization.StartsWith("Basic ", StringComparison.OrdinalIgnoreCase)) return (null, null);
+        try
+        {
+            string decoded = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(authorization[6..].Trim()));
+            int separator = decoded.IndexOf(':');
+            return separator > 0 ? (decoded[..separator], decoded[(separator + 1)..]) : (null, null);
+        }
+        catch (FormatException) { return (null, null); }
     }
 }

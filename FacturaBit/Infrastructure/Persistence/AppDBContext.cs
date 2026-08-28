@@ -57,6 +57,15 @@ public class AppDBContext  : DbContext
         modelBuilder.Entity<Accounts>().HasIndex(item => item.Guid).IsUnique();
         modelBuilder.Entity<Accounts>().HasIndex(item => item.Email).IsUnique();
         modelBuilder.Entity<ComprobanteFiscal>().HasIndex(item => item.Guid).IsUnique();
+        modelBuilder.Entity<ApiClient>(entity =>
+        {
+            entity.HasIndex(item => item.Guid).IsUnique();
+            entity.HasIndex(item => item.ClientId).IsUnique();
+            entity.HasOne(item => item.RedComercial)
+                .WithMany()
+                .HasForeignKey(item => item.RedComercialId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<OrdenCompraSuscripcion>(entity =>
         {
