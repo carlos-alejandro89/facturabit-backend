@@ -378,40 +378,4 @@ public sealed class FacturacionService : IFacturacionService
         }
     }
 
-    public async Task<CancelacionResultDto> CancelarAsync(
-        CancelacionDto cancelacion,
-        CancellationToken cancellationToken)
-    {
-        string rfc = _certificateStorage.NormalizarRfc(cancelacion.RFC);
-        EntidadFiscal? entidadFiscal = await _entidadFiscalRepository.ObtenerPorRfcAsync(rfc, cancellationToken);
-        if (entidadFiscal is null)
-        {
-            throw new FacturacionException("No existe una entidad fiscal registrada con el RFC proporcionado.");
-        }
-
-        ValidarDisponibilidadTimbres(entidadFiscal);
-        ProveedorCancelacionResultDto result = await _timbradoService.CancelarAsync(cancelacion, cancellationToken);
-        if (!result.Success)
-        {
-            string message = result.Mensaje ?? "No fue posible cancelar el CFDI.";
-            if (!string.IsNullOrWhiteSpace(result.Detalle))
-            {
-                message = $"{message} {result.Detalle}";
-            }
-            throw new FacturacionException(message);
-        }
-
-        await DescontarTimbreAsync(rfc, cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(result.Acuse))
-        {
-            throw new FacturacionException(
-                "El proveedor confirmó la cancelación, pero no devolvió el acuse correspondiente.");
-        }
-
-        return new CancelacionResultDto
-        {
-            AcuseBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(result.Acuse))
-        };
-    }
 }

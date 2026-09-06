@@ -17,6 +17,11 @@ public interface IComprobanteFiscalRepository
         string guid,
         string redComercialGuid,
         CancellationToken cancellationToken);
+    Task<ComprobanteFiscal?> ObtenerPorUuidRfcYRedComercialAsync(
+        string uuid,
+        string rfc,
+        string redComercialGuid,
+        CancellationToken cancellationToken);
     Task InsertarAsync(ComprobanteFiscal comprobante, CancellationToken cancellationToken);
     Task MarcarErrorAsync(int id, string mensaje, CancellationToken cancellationToken);
     Task MarcarVigenteAsync(
@@ -24,5 +29,12 @@ public interface IComprobanteFiscalRepository
         FacturacionResultDto resultado,
         string mensaje,
         string? pathXml,
+        CancellationToken cancellationToken);
+    Task MarcarCancelacionEnProcesoAsync(int id, CancellationToken cancellationToken);
+    Task MarcarCancelacionErrorAsync(int id, string mensaje, CancellationToken cancellationToken);
+    Task MarcarCanceladoAsync(
+        int id,
+        string mensaje,
+        string pathXmlCancelacion,
         CancellationToken cancellationToken);
 }

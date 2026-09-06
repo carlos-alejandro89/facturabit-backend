@@ -52,33 +52,76 @@ public sealed class TimbradoSWSapiens : ITimbradoService
     }
 
     public async Task<ProveedorCancelacionResultDto> CancelarAsync(
-        CancelacionDto cancelacion,
+        ProveedorCancelacionRequestDto cancelacion,
         CancellationToken cancellationToken)
     {
         RestClient client = CrearCliente();
         string token = await ObtenerTokenAsync(client, cancellationToken);
 
-        RestRequest request = new("/cfdi33/cancel/csd", Method.Post);
+        RestRequest request = new("/cfdi33/cancel/csd/status", Method.Post);
         request.AddHeader("Authorization", $"Bearer {token}");
-        request.AddJsonBody(new
+        JObject requestBody = new()
         {
-            uuid = cancelacion.UUID,
-            rfc = cancelacion.RFC,
-            password = cancelacion.Password,
-            motivo = cancelacion.Motivo,
-            b64Cer = cancelacion.CerB64,
-            b64Key = cancelacion.KeyB64
-        });
+            ["uuid"] = cancelacion.Uuid,
+            ["rfc"] = cancelacion.Rfc,
+            ["password"] = cancelacion.Password,
+            ["motivo"] = cancelacion.Motivo,
+            ["rfcReceptor"] = cancelacion.RfcReceptor,
+            ["total"] = cancelacion.Total,
+            ["b64Cer"] = cancelacion.CertificadoBase64,
+            ["b64Key"] = cancelacion.LlaveBase64
+        };
+        if (string.Equals(cancelacion.Motivo, "01", StringComparison.Ordinal))
+        {
+            requestBody["folioSustitucion"] = cancelacion.FolioSustitucion;
+        }
+
+        request.AddJsonBody(requestBody);
 
         JObject response = await EjecutarAsync(client, request, cancellationToken);
         bool success = string.Equals(response.Value<string>("status"), "success", StringComparison.OrdinalIgnoreCase);
+
+        JToken? data = response["data"];
+        if (data?.Type == JTokenType.String && !string.IsNullOrWhiteSpace(data.Value<string>()))
+        {
+            try
+            {
+                data = JToken.Parse(data.Value<string>()!);
+            }
+            catch
+            {
+                // Algunos ambientes del proveedor regresan el acuse directamente como texto.
+            }
+        }
+
+        string? acuse = data is JObject dataObject
+            ? dataObject.Value<string>("acuse")
+            : null;
+        if (string.IsNullOrWhiteSpace(acuse) && data?.Type == JTokenType.String)
+        {
+            acuse = data.Value<string>();
+        }
+
+        JObject? uuidData = data?["uuid"] as JObject;
+        Dictionary<string, string> uuidStatuses = uuidData?.Properties()
+            .Where(property => property.Value.Type != JTokenType.Null)
+            .ToDictionary(
+                property => property.Name,
+                property => property.Value.ToString(),
+                StringComparer.OrdinalIgnoreCase)
+            ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         return new ProveedorCancelacionResultDto
         {
             Success = success,
             Mensaje = success ? null : ObtenerMensaje(response),
             Detalle = response.Value<string>("messageDetail"),
-            Acuse = response["data"]?.Value<string>("acuse")
+            Acuse = acuse,
+            StatusSat = data?.Value<string>("statusSat"),
+            StatusCodeSat = data?.Value<string>("statusCodeSat"),
+            IsCancelable = data?.Value<string>("isCancelable"),
+            StatusCancelation = data?.Value<string>("statusCancelation"),
+            UuidStatuses = uuidStatuses
         };
     }
 

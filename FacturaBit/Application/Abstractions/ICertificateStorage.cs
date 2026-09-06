@@ -7,6 +7,8 @@ public interface ICertificateStorage
     string ObtenerRutaLlave(string rfc);
     bool ExisteCertificado(string rfc);
     bool ExisteLlave(string rfc);
+    Task<string> LeerCertificadoBase64Async(string rfc, CancellationToken cancellationToken);
+    Task<string> LeerLlaveBase64Async(string rfc, CancellationToken cancellationToken);
     Task GuardarCertificadoAsync(string rfc, byte[] data, CancellationToken cancellationToken);
     Task GuardarCertificadoYLlaveAsync(
         string rfc,
@@ -22,4 +24,9 @@ public interface ICertificateStorage
         string xml,
         CancellationToken cancellationToken);
     Task<string?> LeerCfdiAsync(string relativePath, CancellationToken cancellationToken);
+    Task<string> GuardarAcuseCancelacionAsync(
+        string rfc,
+        string uuid,
+        string acuse,
+        CancellationToken cancellationToken);
 }

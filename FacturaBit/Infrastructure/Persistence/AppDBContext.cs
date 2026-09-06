@@ -57,6 +57,11 @@ public class AppDBContext  : DbContext
         modelBuilder.Entity<Accounts>().HasIndex(item => item.Guid).IsUnique();
         modelBuilder.Entity<Accounts>().HasIndex(item => item.Email).IsUnique();
         modelBuilder.Entity<ComprobanteFiscal>().HasIndex(item => item.Guid).IsUnique();
+        modelBuilder.Entity<SatMotivosCancelacion>(entity =>
+        {
+            entity.HasIndex(item => item.Guid).IsUnique();
+            entity.HasIndex(item => item.CveMotivo).IsUnique();
+        });
         modelBuilder.Entity<ApiClient>(entity =>
         {
             entity.HasIndex(item => item.Guid).IsUnique();
@@ -114,6 +119,7 @@ public class AppDBContext  : DbContext
         //Seeders
         modelBuilder.SeedRoles();
         modelBuilder.SeedSatRegimenFiscal();
+        modelBuilder.SeedSatMotivosCancelacion();
         modelBuilder.SeedEstatus();
         modelBuilder.SeedSuscripciones();
     }

@@ -14,7 +14,14 @@ public sealed class FacturacionResultDto
 
 public sealed class CancelacionResultDto
 {
-    public required string AcuseBase64 { get; init; }
+    public string? AcuseBase64 { get; init; }
+    public bool Cancelado { get; init; }
+    public string? EstatusSat { get; init; }
+    public string? CodigoEstatusSat { get; init; }
+    public string? EsCancelable { get; init; }
+    public string? EstatusCancelacion { get; init; }
+    public IReadOnlyDictionary<string, string> EstatusPorUuid { get; init; } =
+        new Dictionary<string, string>();
 }
 
 public sealed class TimbradoResultDto
@@ -37,4 +44,10 @@ public sealed class ProveedorCancelacionResultDto
     public string? Mensaje { get; init; }
     public string? Detalle { get; init; }
     public string? Acuse { get; init; }
+    public string? StatusSat { get; init; }
+    public string? StatusCodeSat { get; init; }
+    public string? IsCancelable { get; init; }
+    public string? StatusCancelation { get; init; }
+    public IReadOnlyDictionary<string, string> UuidStatuses { get; init; } =
+        new Dictionary<string, string>();
 }

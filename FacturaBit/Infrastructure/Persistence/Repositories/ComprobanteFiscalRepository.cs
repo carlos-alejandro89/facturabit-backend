@@ -8,6 +8,8 @@ namespace FacturaBit.Infrastructure.Persistence.Repositories;
 public sealed class ComprobanteFiscalRepository : IComprobanteFiscalRepository
 {
     private const int EstatusVigenteId = 2;
+    private const int EstatusCanceladoId = 3;
+    private const int EstatusCancelacionEnProcesoId = 5;
     private const int EstatusErrorId = 8;
     private readonly AppDBContext _dbContext;
 
@@ -79,6 +81,25 @@ public sealed class ComprobanteFiscalRepository : IComprobanteFiscalRepository
                     relation.RedComercial.Guid == redComercialGuid), cancellationToken);
     }
 
+    public Task<ComprobanteFiscal?> ObtenerPorUuidRfcYRedComercialAsync(
+        string uuid,
+        string rfc,
+        string redComercialGuid,
+        CancellationToken cancellationToken)
+    {
+        string normalizedUuid = uuid.Trim().ToUpperInvariant();
+        string normalizedRfc = rfc.Trim().ToUpperInvariant();
+        return _dbContext.Set<ComprobanteFiscal>()
+            .AsNoTracking()
+            .Include(item => item.EntidadFiscal)
+            .SingleOrDefaultAsync(item =>
+                item.FolioFiscal.ToUpper() == normalizedUuid &&
+                item.EntidadFiscal.Rfc.ToUpper() == normalizedRfc &&
+                item.EntidadFiscal.RedesComerciales.Any(relation =>
+                    relation.RedComercial.Guid == redComercialGuid),
+                cancellationToken);
+    }
+
     public async Task InsertarAsync(ComprobanteFiscal comprobante, CancellationToken cancellationToken)
     {
         _dbContext.Add(comprobante);
@@ -122,6 +143,49 @@ public sealed class ComprobanteFiscalRepository : IComprobanteFiscalRepository
                 .SetProperty(item => item.FechaTimbrado, fechaTimbrado)
                 .SetProperty(item => item.CadenaOriginalSat, resultado.CadenaOriginalSat)
                 .SetProperty(item => item.PathXmlCfdi, pathXml)
+                .SetProperty(item => item.UpdatedAt, DateTime.UtcNow),
+                cancellationToken);
+    }
+
+    public async Task MarcarCancelacionEnProcesoAsync(int id, CancellationToken cancellationToken)
+    {
+        await _dbContext.Set<ComprobanteFiscal>()
+            .Where(item => item.Id == id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.EstatusCancelacionId, EstatusCancelacionEnProcesoId)
+                .SetProperty(item => item.Mensaje, "Solicitud de cancelación enviada al proveedor.")
+                .SetProperty(item => item.UpdatedAt, DateTime.UtcNow),
+                cancellationToken);
+    }
+
+    public async Task MarcarCancelacionErrorAsync(
+        int id,
+        string mensaje,
+        CancellationToken cancellationToken)
+    {
+        await _dbContext.Set<ComprobanteFiscal>()
+            .Where(item => item.Id == id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.EstatusCancelacionId, EstatusErrorId)
+                .SetProperty(item => item.Mensaje, mensaje)
+                .SetProperty(item => item.UpdatedAt, DateTime.UtcNow),
+                cancellationToken);
+    }
+
+    public async Task MarcarCanceladoAsync(
+        int id,
+        string mensaje,
+        string pathXmlCancelacion,
+        CancellationToken cancellationToken)
+    {
+        await _dbContext.Set<ComprobanteFiscal>()
+            .Where(item => item.Id == id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.EstatusCfdiId, EstatusCanceladoId)
+                .SetProperty(item => item.EstatusCancelacionId, EstatusCanceladoId)
+                .SetProperty(item => item.Success, true)
+                .SetProperty(item => item.Mensaje, mensaje)
+                .SetProperty(item => item.PathXmlCancelacion, pathXmlCancelacion)
                 .SetProperty(item => item.UpdatedAt, DateTime.UtcNow),
                 cancellationToken);
     }

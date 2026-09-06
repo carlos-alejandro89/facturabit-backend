@@ -132,6 +132,20 @@ builder.Services.AddAuthorization(options =>
             return scope.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains("cfdi.emit", StringComparer.Ordinal);
         });
     });
+    options.AddPolicy("ConsultarEstatusCfdi", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(context =>
+        {
+            string? authType = context.User.FindFirst("auth_type")?.Value;
+            if (!string.Equals(authType, "client_credentials", StringComparison.Ordinal))
+                return context.User.IsInRole("SUPERADMIN") || context.User.IsInRole("ADMIN") || context.User.IsInRole("FACTURISTA");
+
+            string scope = context.User.FindFirst("scope")?.Value ?? string.Empty;
+            return scope.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Contains("cfdi.status", StringComparer.Ordinal);
+        });
+    });
 });
 builder.Services.AddRateLimiter(options =>
 {
@@ -178,6 +192,14 @@ builder.Services.AddScoped<ICfdiXmlBuilder, CfdiXmlBuilder>();
 builder.Services.AddScoped<ICfdiSigner, CfdiSigner>();
 builder.Services.AddScoped<ITimbradoService, TimbradoSWSapiens>();
 builder.Services.AddScoped<IFacturacionService, FacturacionService>();
+builder.Services.AddScoped<ICancelacionCfdiService, CancelacionCfdiService>();
+builder.Services.AddScoped<IConsultaEstatusCfdiService, ConsultaEstatusCfdiService>();
+builder.Services.Configure<SatConsultaEstatusOptions>(
+    builder.Configuration.GetSection(SatConsultaEstatusOptions.SectionName));
+builder.Services.AddHttpClient<ISatConsultaEstatusClient, SatConsultaEstatusClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 var app = builder.Build();
 

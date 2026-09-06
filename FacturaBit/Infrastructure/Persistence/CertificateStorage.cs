@@ -39,6 +39,22 @@ public sealed partial class CertificateStorage : ICertificateStorage
     public bool ExisteCertificado(string rfc) => File.Exists(ObtenerRutaCertificado(rfc));
     public bool ExisteLlave(string rfc) => File.Exists(ObtenerRutaLlave(rfc));
 
+    public async Task<string> LeerCertificadoBase64Async(
+        string rfc,
+        CancellationToken cancellationToken)
+    {
+        byte[] content = await File.ReadAllBytesAsync(ObtenerRutaCertificado(rfc), cancellationToken);
+        return Convert.ToBase64String(content);
+    }
+
+    public async Task<string> LeerLlaveBase64Async(
+        string rfc,
+        CancellationToken cancellationToken)
+    {
+        byte[] content = await File.ReadAllBytesAsync(ObtenerRutaLlave(rfc), cancellationToken);
+        return Convert.ToBase64String(content);
+    }
+
     public async Task GuardarCertificadoAsync(string rfc, byte[] data, CancellationToken cancellationToken)
     {
         string path = ObtenerRutaCertificado(rfc);
@@ -93,6 +109,24 @@ public sealed partial class CertificateStorage : ICertificateStorage
             !string.Equals(Path.GetExtension(fullPath), ".xml", StringComparison.OrdinalIgnoreCase) ||
             !File.Exists(fullPath)) return null;
         return await File.ReadAllTextAsync(fullPath, cancellationToken);
+    }
+
+    public async Task<string> GuardarAcuseCancelacionAsync(
+        string rfc,
+        string uuid,
+        string acuse,
+        CancellationToken cancellationToken)
+    {
+        string normalizedRfc = NormalizarRfc(rfc);
+        string normalizedUuid = SafeFilePart(uuid.Trim().ToUpperInvariant());
+        string relativePath = Path.Combine(
+            "Certificados",
+            normalizedRfc,
+            $"ACUSE_CANCELACION_{normalizedUuid}.xml");
+        string path = Path.Combine(Path.GetDirectoryName(_rootPath)!, relativePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        await File.WriteAllTextAsync(path, acuse, new UTF8Encoding(false), cancellationToken);
+        return relativePath;
     }
 
     private static string ObtenerPrefijoUuid(string uuid)

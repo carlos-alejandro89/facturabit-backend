@@ -7,7 +7,7 @@ public sealed class CreateApiClientRequest
 {
     [Required, MaxLength(120)]
     public string Nombre { get; init; } = string.Empty;
-    public string[] Scopes { get; init; } = ["cfdi.emit"];
+    public string[] Scopes { get; init; } = ["cfdi.emit", "cfdi.status"];
 }
 
 public sealed class ClientCredentialsTokenRequest

@@ -8,7 +8,12 @@ namespace FacturaBit.Application.Features;
 public sealed class ApiClientService : IApiClientService
 {
     public const string EmitScope = "cfdi.emit";
-    private static readonly HashSet<string> AllowedScopes = new(StringComparer.Ordinal) { EmitScope };
+    public const string StatusScope = "cfdi.status";
+    private static readonly HashSet<string> AllowedScopes = new(StringComparer.Ordinal)
+    {
+        EmitScope,
+        StatusScope
+    };
     private readonly IApiClientRepository _repository;
     private readonly IApiClientSecretService _secretService;
     private readonly IApplicationTokenGenerator _tokenGenerator;
@@ -27,7 +32,8 @@ public sealed class ApiClientService : IApiClientService
         if (!await _repository.TieneAccesoApiAsync(red.Id, cancellationToken))
             throw new ConflictoException("La suscripción actual no incluye acceso a la API.");
 
-        string[] normalizedScopes = NormalizeScopes(scopes is { Count: > 0 } ? scopes : [EmitScope]);
+        string[] normalizedScopes = NormalizeScopes(
+            scopes is { Count: > 0 } ? scopes : [EmitScope, StatusScope]);
         string clientId;
         do clientId = _secretService.GenerarClientId();
         while (await _repository.ExisteClientIdAsync(clientId, cancellationToken));
