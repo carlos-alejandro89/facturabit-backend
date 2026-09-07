@@ -130,7 +130,8 @@ public sealed class FacturacionController : ControllerBase
     }
 
     [HttpPost("cancelar-cfdi")]
-    [Authorize(Roles = "SUPERADMIN,ADMIN,FACTURISTA")]
+
+    [EnableRateLimiting("ApiClients")]
     public async Task<ActionResult<ApiResponse<CancelacionResultDto>>> CancelarCfdi(
         CancelacionDto cancelacion,
         CancellationToken cancellationToken)

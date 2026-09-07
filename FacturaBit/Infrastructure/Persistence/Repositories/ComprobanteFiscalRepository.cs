@@ -100,6 +100,22 @@ public sealed class ComprobanteFiscalRepository : IComprobanteFiscalRepository
                 cancellationToken);
     }
 
+    public Task<ComprobanteFiscal?> ObtenerPorUuidYRedComercialAsync(
+        string uuid,
+        string redComercialGuid,
+        CancellationToken cancellationToken)
+    {
+        string normalizedUuid = uuid.Trim().ToUpperInvariant();
+        return _dbContext.Set<ComprobanteFiscal>()
+            .AsNoTracking()
+            .Include(item => item.EntidadFiscal)
+            .SingleOrDefaultAsync(item =>
+                item.FolioFiscal.ToUpper() == normalizedUuid &&
+                item.EntidadFiscal.RedesComerciales.Any(relation =>
+                    relation.RedComercial.Guid == redComercialGuid),
+                cancellationToken);
+    }
+
     public async Task InsertarAsync(ComprobanteFiscal comprobante, CancellationToken cancellationToken)
     {
         _dbContext.Add(comprobante);

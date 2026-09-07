@@ -858,6 +858,100 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("FacturaBit.Domain.Entities.SatMotivosCancelacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CveMotivo")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("cve_motivo");
+
+                    b.Property<string>("Guid")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("guid");
+
+                    b.Property<string>("MotivoCancelacion")
+                        .IsRequired()
+                        .HasMaxLength(180)
+                        .HasColumnType("character varying(180)")
+                        .HasColumnName("motivo_cancelacion");
+
+                    b.Property<bool>("RequiereFolioSustitucion")
+                        .HasColumnType("boolean")
+                        .HasColumnName("requiere_folio_sustitucion");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_sat_motivos_cancelacion");
+
+                    b.HasIndex("CveMotivo")
+                        .IsUnique()
+                        .HasDatabaseName("ix_sat_motivos_cancelacion_cve_motivo");
+
+                    b.HasIndex("Guid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_sat_motivos_cancelacion_guid");
+
+                    b.ToTable("sat_motivos_cancelacion", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            CveMotivo = "01",
+                            Guid = "2c7833b3-5570-4b97-b626-5d881e491a35",
+                            MotivoCancelacion = "COMPROBANTES EMITIDOS CON ERRORES CON RELACIÓN",
+                            RequiereFolioSustitucion = true,
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            CveMotivo = "02",
+                            Guid = "aad0a49f-fb42-4bbb-9dc7-c8ad097d5ae0",
+                            MotivoCancelacion = "COMPROBANTES EMITIDOS CON ERRORES SIN RELACIÓN",
+                            RequiereFolioSustitucion = false,
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            CveMotivo = "03",
+                            Guid = "09948acc-2002-4cbd-a16e-c6a127515a93",
+                            MotivoCancelacion = "NO SE LLEVÓ A CABO LA OPERACIÓN",
+                            RequiereFolioSustitucion = false,
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CreatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc),
+                            CveMotivo = "04",
+                            Guid = "0d887f32-485c-4d10-92ce-0228a22d4006",
+                            MotivoCancelacion = "OPERACIÓN NOMINATIVA RELACIONADA EN UNA FACTURA GLOBAL",
+                            RequiereFolioSustitucion = false,
+                            UpdatedAt = new DateTime(2026, 8, 21, 20, 21, 33, 0, DateTimeKind.Utc)
+                        });
+                });
+
             modelBuilder.Entity("FacturaBit.Domain.Entities.SatRegimenFiscal", b =>
                 {
                     b.Property<int>("Id")

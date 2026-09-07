@@ -56,6 +56,18 @@
         <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.AddOAuthApiClientConstraints.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
+        <member name="T:FacturaBit.Infrastructure.Persistence.Migrations.CreateSatMotivosCancelacionTable">
+            <inheritdoc />
+        </member>
+        <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.CreateSatMotivosCancelacionTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.CreateSatMotivosCancelacionTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:FacturaBit.Infrastructure.Persistence.Migrations.CreateSatMotivosCancelacionTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
         <member name="T:System.Text.RegularExpressions.Generated.RfcPattern_0">
             <summary>Custom <see cref="T:System.Text.RegularExpressions.Regex"/>-derived type for the RfcPattern method.</summary>
         </member>

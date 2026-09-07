@@ -60,21 +60,21 @@ public sealed class TimbradoSWSapiens : ITimbradoService
 
         RestRequest request = new("/cfdi33/cancel/csd/status", Method.Post);
         request.AddHeader("Authorization", $"Bearer {token}");
-        JObject requestBody = new()
+        var requestBody = new
         {
-            ["uuid"] = cancelacion.Uuid,
-            ["rfc"] = cancelacion.Rfc,
-            ["password"] = cancelacion.Password,
-            ["motivo"] = cancelacion.Motivo,
-            ["rfcReceptor"] = cancelacion.RfcReceptor,
-            ["total"] = cancelacion.Total,
-            ["b64Cer"] = cancelacion.CertificadoBase64,
-            ["b64Key"] = cancelacion.LlaveBase64
+            uuid = cancelacion.Uuid,
+            rfc = cancelacion.Rfc,
+            password = cancelacion.Password,
+            motivo = cancelacion.Motivo,
+            rfcReceptor = cancelacion.RfcReceptor,
+            total = cancelacion.Total,
+            b64Cer = cancelacion.CertificadoBase64,
+            b64Key = cancelacion.LlaveBase64,
+            folioSustitucion = string.Equals(cancelacion.Motivo, "01", StringComparison.Ordinal) 
+                ? cancelacion.FolioSustitucion 
+                : null
         };
-        if (string.Equals(cancelacion.Motivo, "01", StringComparison.Ordinal))
-        {
-            requestBody["folioSustitucion"] = cancelacion.FolioSustitucion;
-        }
+      
 
         request.AddJsonBody(requestBody);
 

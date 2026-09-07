@@ -40,7 +40,6 @@ public sealed class CancelacionCfdiService : ICancelacionCfdiService
         string redComercialGuid,
         CancellationToken cancellationToken)
     {
-        string rfc = _certificateStorage.NormalizarRfc(cancelacion.RFC);
         string uuid = NormalizarUuid(cancelacion.UUID);
         string motivo = cancelacion.Motivo.Trim();
         string? folioSustitucion = ValidarYNormalizarFolioSustitucion(
@@ -48,16 +47,17 @@ public sealed class CancelacionCfdiService : ICancelacionCfdiService
             cancelacion.FolioSustitucion,
             uuid);
 
-        ComprobanteFiscal? comprobante = await _comprobanteRepository.ObtenerPorUuidRfcYRedComercialAsync(
+        ComprobanteFiscal? comprobante = await _comprobanteRepository.ObtenerPorUuidYRedComercialAsync(
             uuid,
-            rfc,
             redComercialGuid,
             cancellationToken);
         if (comprobante is null)
         {
             throw new FacturacionException(
-                "No existe un CFDI con el UUID y RFC indicados dentro de la organización autenticada.");
+                "No existe un CFDI con el UUID indicado dentro de la organización autenticada.");
         }
+
+        string rfc = _certificateStorage.NormalizarRfc(comprobante.EntidadFiscal.Rfc);
 
         if (comprobante.EstatusCfdiId == 3)
         {
@@ -100,7 +100,7 @@ public sealed class CancelacionCfdiService : ICancelacionCfdiService
             Uuid = uuid,
             Motivo = motivo,
             FolioSustitucion = folioSustitucion,
-            RfcReceptor = _certificateStorage.NormalizarRfc(comprobante.ReceptorRfc),
+            RfcReceptor = NormalizarRfcReceptor(comprobante.ReceptorRfc),
             Total = ObtenerTotal(comprobante.JsonRequest),
             CertificadoBase64 = await _certificateStorage.LeerCertificadoBase64Async(rfc, cancellationToken),
             LlaveBase64 = await _certificateStorage.LeerLlaveBase64Async(rfc, cancellationToken),
@@ -264,6 +264,26 @@ public sealed class CancelacionCfdiService : ICancelacionCfdiService
         }
 
         return value;
+    }
+
+    private string NormalizarRfcReceptor(string? rfcReceptor)
+    {
+        if (string.IsNullOrWhiteSpace(rfcReceptor))
+        {
+            throw new FacturacionException(
+                "El comprobante no tiene configurado el RFC del receptor.");
+        }
+
+        try
+        {
+            return _certificateStorage.NormalizarRfc(rfcReceptor);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new FacturacionException(
+                "El RFC del receptor almacenado en el comprobante no tiene un formato válido.",
+                exception);
+        }
     }
 
     private static string? ValidarYNormalizarFolioSustitucion(

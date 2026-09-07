@@ -4,9 +4,6 @@ namespace FacturaBit.Application.DTOs;
 
 public sealed class CancelacionDto : IValidatableObject
 {
-    [Required, MaxLength(13)]
-    public string RFC { get; init; } = string.Empty;
-
     [Required, MaxLength(36)]
     public string UUID { get; init; } = string.Empty;
 

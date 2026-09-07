@@ -22,6 +22,10 @@ public interface IComprobanteFiscalRepository
         string rfc,
         string redComercialGuid,
         CancellationToken cancellationToken);
+    Task<ComprobanteFiscal?> ObtenerPorUuidYRedComercialAsync(
+        string uuid,
+        string redComercialGuid,
+        CancellationToken cancellationToken);
     Task InsertarAsync(ComprobanteFiscal comprobante, CancellationToken cancellationToken);
     Task MarcarErrorAsync(int id, string mensaje, CancellationToken cancellationToken);
     Task MarcarVigenteAsync(

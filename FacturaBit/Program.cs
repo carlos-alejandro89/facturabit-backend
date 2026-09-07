@@ -172,6 +172,8 @@ builder.Services.AddScoped<IEntidadFiscalService, EntidadFiscalService>();
 builder.Services.AddScoped<IEntidadFiscalRepository, EntidadFiscalRepository>();
 builder.Services.AddScoped<ISatRegimenFiscalService, SatRegimenFiscalService>();
 builder.Services.AddScoped<ISatRegimenFiscalRepository, SatRegimenFiscalRepository>();
+builder.Services.AddScoped<ISatMotivosCancelacionService, SatMotivosCancelacionService>();
+builder.Services.AddScoped<ISatMotivosCancelacionRepository, SatMotivosCancelacionRepository>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
 builder.Services.AddScoped<IApiClientService, ApiClientService>();
