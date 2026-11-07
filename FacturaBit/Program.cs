@@ -165,6 +165,17 @@ builder.Services.AddRateLimiter(options =>
             AutoReplenishment = true
         });
     });
+    options.AddPolicy("PasswordRecovery", context =>
+    {
+        string partitionKey = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(15),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
 });
 
 builder.Services.AddScoped<FacturaBit.Infrastructure.Security.Cryptography.OpenSSL>();
@@ -176,6 +187,9 @@ builder.Services.AddScoped<ISatMotivosCancelacionService, SatMotivosCancelacionS
 builder.Services.AddScoped<ISatMotivosCancelacionRepository, SatMotivosCancelacionRepository>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+builder.Services.AddScoped<IPasswordRecoveryRepository, PasswordRecoveryRepository>();
+builder.Services.AddScoped<IPasswordRecoveryService, PasswordRecoveryService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IApiClientService, ApiClientService>();
 builder.Services.AddScoped<IApiClientRepository, ApiClientRepository>();
 builder.Services.AddScoped<IApiClientSecretService, ApiClientSecretService>();
@@ -190,6 +204,7 @@ builder.Services.AddScoped<IComprobanteFiscalService, ComprobanteFiscalService>(
 builder.Services.AddScoped<IPasswordHasher<Accounts>, PasswordHasher<Accounts>>();
 builder.Services.AddScoped<IPasswordHasher<ApiClient>, PasswordHasher<ApiClient>>();
 builder.Services.AddScoped<ICertificateStorage, CertificateStorage>();
+builder.Services.AddScoped<IDocumentPdfService, DocumentPdfService>();
 builder.Services.AddScoped<ICfdiXmlBuilder, CfdiXmlBuilder>();
 builder.Services.AddScoped<ICfdiSigner, CfdiSigner>();
 builder.Services.AddScoped<ITimbradoService, TimbradoSWSapiens>();
@@ -202,8 +217,18 @@ builder.Services.AddHttpClient<ISatConsultaEstatusClient, SatConsultaEstatusClie
 {
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.Configure<PasswordRecoveryOptions>(
+    builder.Configuration.GetSection(PasswordRecoveryOptions.SectionName));
+builder.Services.Configure<EmailOptions>(
+    builder.Configuration.GetSection(EmailOptions.SectionName));
 
 var app = builder.Build();
+
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    AppDBContext db = scope.ServiceProvider.GetRequiredService<AppDBContext>();
+    db.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

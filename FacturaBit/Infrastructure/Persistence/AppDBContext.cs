@@ -56,6 +56,15 @@ public class AppDBContext  : DbContext
         modelBuilder.Entity<EntidadFiscal>().HasIndex(item => item.Guid).IsUnique();
         modelBuilder.Entity<Accounts>().HasIndex(item => item.Guid).IsUnique();
         modelBuilder.Entity<Accounts>().HasIndex(item => item.Email).IsUnique();
+        modelBuilder.Entity<PasswordRecoveryCode>(entity =>
+        {
+            entity.HasIndex(item => item.Guid).IsUnique();
+            entity.HasIndex(item => new { item.AccountId, item.CreatedAt });
+            entity.HasOne(item => item.Account)
+                .WithMany()
+                .HasForeignKey(item => item.AccountId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
         modelBuilder.Entity<ComprobanteFiscal>().HasIndex(item => item.Guid).IsUnique();
         modelBuilder.Entity<SatMotivosCancelacion>(entity =>
         {

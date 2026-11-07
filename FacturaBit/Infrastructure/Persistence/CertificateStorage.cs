@@ -113,20 +113,39 @@ public sealed partial class CertificateStorage : ICertificateStorage
 
     public async Task<string> GuardarAcuseCancelacionAsync(
         string rfc,
+        string? serie,
+        string folio,
         string uuid,
         string acuse,
+        byte[] pdf,
         CancellationToken cancellationToken)
     {
         string normalizedRfc = NormalizarRfc(rfc);
-        string normalizedUuid = SafeFilePart(uuid.Trim().ToUpperInvariant());
+        string safeFolio = SafeFilePart(folio);
+        string uuidPrefix = ObtenerPrefijoUuid(uuid);
+        string fileName = string.IsNullOrWhiteSpace(serie)
+            ? $"CANC_{safeFolio}_{uuidPrefix}.xml"
+            : $"CANC_{SafeFilePart(serie)}_{safeFolio}_{uuidPrefix}.xml";
         string relativePath = Path.Combine(
             "Certificados",
             normalizedRfc,
-            $"ACUSE_CANCELACION_{normalizedUuid}.xml");
+            fileName);
         string path = Path.Combine(Path.GetDirectoryName(_rootPath)!, relativePath);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         await File.WriteAllTextAsync(path, acuse, new UTF8Encoding(false), cancellationToken);
+        await File.WriteAllBytesAsync(Path.ChangeExtension(path, ".pdf"), pdf, cancellationToken);
         return relativePath;
+    }
+
+    public async Task<byte[]?> LeerPdfAsync(string relativeXmlPath, CancellationToken cancellationToken)
+    {
+        string contentRoot = Path.GetFullPath(Path.GetDirectoryName(_rootPath)!);
+        string fullPath = Path.ChangeExtension(
+            Path.GetFullPath(Path.Combine(contentRoot, relativeXmlPath)),
+            ".pdf");
+        if (!fullPath.StartsWith(_rootPath + Path.DirectorySeparatorChar, StringComparison.Ordinal) ||
+            !File.Exists(fullPath)) return null;
+        return await File.ReadAllBytesAsync(fullPath, cancellationToken);
     }
 
     private static string ObtenerPrefijoUuid(string uuid)

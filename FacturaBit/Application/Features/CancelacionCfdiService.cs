@@ -15,6 +15,7 @@ public sealed class CancelacionCfdiService : ICancelacionCfdiService
     private readonly ITimbradoService _timbradoService;
     private readonly IEntidadFiscalRepository _entidadFiscalRepository;
     private readonly IComprobanteFiscalRepository _comprobanteRepository;
+    private readonly IDocumentPdfService _documentPdfService;
     private readonly ILogger<CancelacionCfdiService> _logger;
 
     public CancelacionCfdiService(
@@ -24,6 +25,7 @@ public sealed class CancelacionCfdiService : ICancelacionCfdiService
         ITimbradoService timbradoService,
         IEntidadFiscalRepository entidadFiscalRepository,
         IComprobanteFiscalRepository comprobanteRepository,
+        IDocumentPdfService documentPdfService,
         ILogger<CancelacionCfdiService> logger)
     {
         _certificateStorage = certificateStorage;
@@ -32,6 +34,7 @@ public sealed class CancelacionCfdiService : ICancelacionCfdiService
         _timbradoService = timbradoService;
         _entidadFiscalRepository = entidadFiscalRepository;
         _comprobanteRepository = comprobanteRepository;
+        _documentPdfService = documentPdfService;
         _logger = logger;
     }
 
@@ -140,13 +143,18 @@ public sealed class CancelacionCfdiService : ICancelacionCfdiService
                 throw new FacturacionException(message);
             }
 
+            byte[]? acusePdf = null;
             if (cancelado)
             {
                 await DescontarTimbreAsync(entidadFiscal, cancellationToken);
+                acusePdf = _documentPdfService.GenerarAcuseCancelacion(result.Acuse!);
                 string path = await _certificateStorage.GuardarAcuseCancelacionAsync(
                     rfc,
+                    comprobante.SerieCfdi,
+                    comprobante.Folio,
                     uuid,
                     result.Acuse!,
+                    acusePdf,
                     cancellationToken);
                 await _comprobanteRepository.MarcarCanceladoAsync(
                     comprobante.Id,
@@ -160,6 +168,7 @@ public sealed class CancelacionCfdiService : ICancelacionCfdiService
                 AcuseBase64 = string.IsNullOrWhiteSpace(result.Acuse)
                     ? null
                     : Convert.ToBase64String(Encoding.UTF8.GetBytes(result.Acuse)),
+                AcusePdfBase64 = acusePdf is null ? null : Convert.ToBase64String(acusePdf),
                 Cancelado = cancelado,
                 EstatusSat = result.StatusSat,
                 CodigoEstatusSat = result.StatusCodeSat,

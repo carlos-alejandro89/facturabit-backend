@@ -4,6 +4,7 @@ using FacturaBit.Application.Abstractions;
 using FacturaBit.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FacturaBit.Api.Controllers;
 
@@ -13,11 +14,92 @@ public sealed class AuthenticationController : ControllerBase
 {
     private readonly IAuthenticationService _authenticationService;
     private readonly IApiClientService _apiClientService;
+    private readonly IPasswordRecoveryService _passwordRecoveryService;
 
-    public AuthenticationController(IAuthenticationService authenticationService, IApiClientService apiClientService)
+    public AuthenticationController(
+        IAuthenticationService authenticationService,
+        IApiClientService apiClientService,
+        IPasswordRecoveryService passwordRecoveryService)
     {
         _authenticationService = authenticationService;
         _apiClientService = apiClientService;
+        _passwordRecoveryService = passwordRecoveryService;
+    }
+
+    [AllowAnonymous]
+    [EnableRateLimiting("PasswordRecovery")]
+    [HttpPost("password-recovery/request")]
+    public async Task<ActionResult<ApiResponse<object>>> RequestPasswordRecovery(
+        RequestPasswordRecoveryRequest request,
+        CancellationToken cancellationToken)
+    {
+        await _passwordRecoveryService.SolicitarAsync(request.Email, cancellationToken);
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Mensaje = "Si el correo está registrado, recibirás un código de recuperación en unos minutos.",
+            HttpCode = StatusCodes.Status200OK
+        });
+    }
+
+    [AllowAnonymous]
+    [EnableRateLimiting("PasswordRecovery")]
+    [HttpPost("password-recovery/verify")]
+    public async Task<ActionResult<ApiResponse<PasswordRecoveryVerificationDto>>> VerifyPasswordRecoveryCode(
+        VerifyPasswordRecoveryCodeRequest request,
+        CancellationToken cancellationToken)
+    {
+        bool valid = await _passwordRecoveryService.VerificarAsync(
+            request.Email,
+            request.Code,
+            cancellationToken);
+        return valid
+            ? Ok(new ApiResponse<PasswordRecoveryVerificationDto>
+            {
+                Success = true,
+                Mensaje = "Código verificado correctamente.",
+                HttpCode = StatusCodes.Status200OK,
+                Data = new PasswordRecoveryVerificationDto { Valid = true }
+            })
+            : BadRequest(new ApiResponse<PasswordRecoveryVerificationDto>
+            {
+                Success = false,
+                Mensaje = "El código es inválido, expiró o superó el número de intentos permitidos.",
+                HttpCode = StatusCodes.Status400BadRequest,
+                Data = new PasswordRecoveryVerificationDto { Valid = false }
+            });
+    }
+
+    [AllowAnonymous]
+    [EnableRateLimiting("PasswordRecovery")]
+    [HttpPost("password-recovery/reset")]
+    public async Task<ActionResult<ApiResponse<object>>> ResetPassword(
+        ResetPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _passwordRecoveryService.RestablecerAsync(
+                request.Email,
+                request.Code,
+                request.NewPassword,
+                cancellationToken);
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Mensaje = "Tu contraseña fue actualizada correctamente.",
+                HttpCode = StatusCodes.Status200OK
+            });
+        }
+        catch (FacturaBit.Application.Exceptions.PasswordRecoveryException exception)
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Mensaje = exception.Message,
+                HttpCode = StatusCodes.Status400BadRequest
+            });
+        }
     }
 
     [AllowAnonymous]

@@ -13,4 +13,6 @@ public interface IComprobanteFiscalService
         int tamanoPagina,
         CancellationToken cancellationToken);
     Task<ComprobanteXmlDto?> ObtenerXmlAsync(string guid, string redComercialGuid, CancellationToken cancellationToken);
+    Task<ComprobanteArchivoDto?> ObtenerPdfAsync(string guid, string redComercialGuid, CancellationToken cancellationToken);
+    Task<ComprobanteArchivoDto?> ObtenerAcusePdfAsync(string guid, string redComercialGuid, CancellationToken cancellationToken);
 }

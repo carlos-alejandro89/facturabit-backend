@@ -9,11 +9,57 @@ public sealed class ComprobanteFiscalService : IComprobanteFiscalService
 {
     private readonly IComprobanteFiscalRepository _repository;
     private readonly ICertificateStorage _storage;
+    private readonly IDocumentPdfService _pdfService;
 
-    public ComprobanteFiscalService(IComprobanteFiscalRepository repository, ICertificateStorage storage)
+    public ComprobanteFiscalService(
+        IComprobanteFiscalRepository repository,
+        ICertificateStorage storage,
+        IDocumentPdfService pdfService)
     {
         _repository = repository;
         _storage = storage;
+        _pdfService = pdfService;
+    }
+
+    public async Task<ComprobanteArchivoDto?> ObtenerPdfAsync(
+        string guid,
+        string redComercialGuid,
+        CancellationToken cancellationToken)
+    {
+        ComprobanteFiscal? entity = await _repository.ObtenerPorGuidYRedComercialAsync(
+            guid, redComercialGuid, cancellationToken);
+        if (entity is null || string.IsNullOrWhiteSpace(entity.PathXmlCfdi)) return null;
+        string? xml = await _storage.LeerCfdiAsync(entity.PathXmlCfdi, cancellationToken);
+        if (xml is null) return null;
+        return new ComprobanteArchivoDto
+        {
+            NombreArchivo = Path.ChangeExtension(Path.GetFileName(entity.PathXmlCfdi), ".pdf"),
+            Contenido = _pdfService.GenerarCfdi(xml),
+            ContentType = "application/pdf"
+        };
+    }
+
+    public async Task<ComprobanteArchivoDto?> ObtenerAcusePdfAsync(
+        string guid,
+        string redComercialGuid,
+        CancellationToken cancellationToken)
+    {
+        ComprobanteFiscal? entity = await _repository.ObtenerPorGuidYRedComercialAsync(
+            guid, redComercialGuid, cancellationToken);
+        if (entity is null || string.IsNullOrWhiteSpace(entity.PathXmlCancelacion)) return null;
+        byte[]? pdf = await _storage.LeerPdfAsync(entity.PathXmlCancelacion, cancellationToken);
+        if (pdf is null)
+        {
+            string? xml = await _storage.LeerCfdiAsync(entity.PathXmlCancelacion, cancellationToken);
+            if (xml is null) return null;
+            pdf = _pdfService.GenerarAcuseCancelacion(xml);
+        }
+        return new ComprobanteArchivoDto
+        {
+            NombreArchivo = Path.ChangeExtension(Path.GetFileName(entity.PathXmlCancelacion), ".pdf"),
+            Contenido = pdf,
+            ContentType = "application/pdf"
+        };
     }
 
     public async Task<ComprobanteXmlDto?> ObtenerXmlAsync(
@@ -74,6 +120,7 @@ public sealed class ComprobanteFiscalService : IComprobanteFiscalService
         FolioFiscal = string.IsNullOrWhiteSpace(entity.FolioFiscal) ? null : entity.FolioFiscal,
         Fecha = entity.FechaTimbrado > DateTime.UnixEpoch ? entity.FechaTimbrado : entity.CreatedAt,
         PathXmlCfdi = entity.PathXmlCfdi,
+        TieneAcuse = !string.IsNullOrWhiteSpace(entity.PathXmlCancelacion),
         Emisor = new ComprobanteEmisorDto
         {
             Guid = entity.EntidadFiscal.Guid,

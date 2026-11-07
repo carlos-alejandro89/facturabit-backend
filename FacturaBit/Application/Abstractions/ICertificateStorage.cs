@@ -26,7 +26,11 @@ public interface ICertificateStorage
     Task<string?> LeerCfdiAsync(string relativePath, CancellationToken cancellationToken);
     Task<string> GuardarAcuseCancelacionAsync(
         string rfc,
+        string? serie,
+        string folio,
         string uuid,
         string acuse,
+        byte[] pdf,
         CancellationToken cancellationToken);
+    Task<byte[]?> LeerPdfAsync(string relativeXmlPath, CancellationToken cancellationToken);
 }

@@ -15,6 +15,7 @@ public sealed class FacturacionResultDto
 public sealed class CancelacionResultDto
 {
     public string? AcuseBase64 { get; init; }
+    public string? AcusePdfBase64 { get; init; }
     public bool Cancelado { get; init; }
     public string? EstatusSat { get; init; }
     public string? CodigoEstatusSat { get; init; }

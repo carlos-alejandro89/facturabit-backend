@@ -19,6 +19,28 @@ public sealed class ComprobantesController : ControllerBase
         _service = service;
     }
 
+    [HttpGet("{guid}/pdf")]
+    public async Task<IActionResult> ObtenerPdf(string guid, CancellationToken cancellationToken)
+    {
+        string? redComercialGuid = User.FindFirstValue("red_comercial_guid");
+        if (redComercialGuid is null) return Unauthorized();
+        ComprobanteArchivoDto? result = await _service.ObtenerPdfAsync(guid, redComercialGuid, cancellationToken);
+        return result is null
+            ? NotFound(Respuesta<object>(false, "El PDF del comprobante no está disponible.", 404, null))
+            : File(result.Contenido, result.ContentType, result.NombreArchivo);
+    }
+
+    [HttpGet("{guid}/acuse/pdf")]
+    public async Task<IActionResult> ObtenerAcusePdf(string guid, CancellationToken cancellationToken)
+    {
+        string? redComercialGuid = User.FindFirstValue("red_comercial_guid");
+        if (redComercialGuid is null) return Unauthorized();
+        ComprobanteArchivoDto? result = await _service.ObtenerAcusePdfAsync(guid, redComercialGuid, cancellationToken);
+        return result is null
+            ? NotFound(Respuesta<object>(false, "El acuse de cancelación no está disponible.", 404, null))
+            : File(result.Contenido, result.ContentType, result.NombreArchivo);
+    }
+
     [HttpGet]
     public async Task<ActionResult<ApiResponse<ComprobantesPageDto>>> Obtener(
         [FromQuery] string? emisorGuid,

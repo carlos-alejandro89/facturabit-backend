@@ -719,6 +719,70 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
                     b.ToTable("ordenes_compra_suscripcion", (string)null);
                 });
 
+            modelBuilder.Entity("FacturaBit.Domain.Entities.PasswordRecoveryCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer")
+                        .HasColumnName("account_id");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("failed_attempts");
+
+                    b.Property<string>("Guid")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)")
+                        .HasColumnName("guid");
+
+                    b.Property<string>("Salt")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("salt");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_password_recovery_codes");
+
+                    b.HasIndex("Guid")
+                        .IsUnique()
+                        .HasDatabaseName("ix_password_recovery_codes_guid");
+
+                    b.HasIndex("AccountId", "CreatedAt")
+                        .HasDatabaseName("ix_password_recovery_codes_account_id_created_at");
+
+                    b.ToTable("password_recovery_codes", (string)null);
+                });
+
             modelBuilder.Entity("FacturaBit.Domain.Entities.RedComercial", b =>
                 {
                     b.Property<int>("Id")
@@ -1414,6 +1478,18 @@ namespace FacturaBit.Infrastructure.Persistence.Migrations
                     b.Navigation("RedComercial");
 
                     b.Navigation("Suscripcion");
+                });
+
+            modelBuilder.Entity("FacturaBit.Domain.Entities.PasswordRecoveryCode", b =>
+                {
+                    b.HasOne("FacturaBit.Domain.Entities.Accounts", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_password_recovery_codes_accounts_account_id");
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("FacturaBit.Domain.Entities.RedComercialEntidadFiscal", b =>

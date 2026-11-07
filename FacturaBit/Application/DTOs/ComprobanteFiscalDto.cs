@@ -14,6 +14,7 @@ public sealed class ComprobanteFiscalDto
     public string? FolioFiscal { get; init; }
     public DateTime Fecha { get; init; }
     public string? PathXmlCfdi { get; init; }
+    public bool TieneAcuse { get; init; }
     public required ComprobanteEmisorDto Emisor { get; init; }
 }
 
