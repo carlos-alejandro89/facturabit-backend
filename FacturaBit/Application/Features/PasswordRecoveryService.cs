@@ -73,6 +73,9 @@ public sealed class PasswordRecoveryService : IPasswordRecoveryService
                 exception,
                 "No fue posible enviar el código de recuperación a la cuenta {AccountId}.",
                 account.Id);
+            throw new EmailDeliveryException(
+                "No fue posible enviar el correo de recuperación. Inténtalo nuevamente más tarde.",
+                exception);
         }
     }
 

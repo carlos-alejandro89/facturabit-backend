@@ -6,6 +6,7 @@ using FacturaBit.Application.Abstractions;
 using FacturaBit.Application.Features;
 using FacturaBit.Domain.Entities;
 using FacturaBit.Infrastructure.Identity;
+using FacturaBit.Infrastructure.Logging;
 using FacturaBit.Infrastructure.Persistence;
 using FacturaBit.Infrastructure.Persistence.Repositories;
 using FacturaBit.Infrastructure.Services;
@@ -19,6 +20,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddProvider(new FileLoggerProvider(
+    Path.Combine(builder.Environment.ContentRootPath, "Logs")));
 builder.Services.AddDbContext<AppDBContext>(options => options.UseNpgsql(
         builder.Configuration.GetConnectionString("PostgreSQL")
     ).UseSnakeCaseNamingConvention()
@@ -206,9 +209,11 @@ builder.Services.AddScoped<IPasswordHasher<ApiClient>, PasswordHasher<ApiClient>
 builder.Services.AddScoped<ICertificateStorage, CertificateStorage>();
 builder.Services.AddScoped<IDocumentPdfService, DocumentPdfService>();
 builder.Services.AddScoped<ICfdiXmlBuilder, CfdiXmlBuilder>();
+builder.Services.AddScoped<IComplementoPagoXmlBuilder, ComplementoPagoXmlBuilder>();
 builder.Services.AddScoped<ICfdiSigner, CfdiSigner>();
 builder.Services.AddScoped<ITimbradoService, TimbradoSWSapiens>();
 builder.Services.AddScoped<IFacturacionService, FacturacionService>();
+builder.Services.AddScoped<IComplementoPagoService, ComplementoPagoService>();
 builder.Services.AddScoped<ICancelacionCfdiService, CancelacionCfdiService>();
 builder.Services.AddScoped<IConsultaEstatusCfdiService, ConsultaEstatusCfdiService>();
 builder.Services.Configure<SatConsultaEstatusOptions>(

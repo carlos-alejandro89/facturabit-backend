@@ -15,6 +15,7 @@ namespace FacturaBit.Api.Controllers;
 public sealed class FacturacionController : ControllerBase
 {
     private readonly IFacturacionService _service;
+    private readonly IComplementoPagoService _complementoPagoService;
     private readonly ICancelacionCfdiService _cancelacionService;
     private readonly IConsultaEstatusCfdiService _consultaEstatusService;
     private readonly IApiClientService _apiClientService;
@@ -22,12 +23,14 @@ public sealed class FacturacionController : ControllerBase
 
     public FacturacionController(
         IFacturacionService service,
+        IComplementoPagoService complementoPagoService,
         ICancelacionCfdiService cancelacionService,
         IConsultaEstatusCfdiService consultaEstatusService,
         IApiClientService apiClientService,
         ILogger<FacturacionController> logger)
     {
         _service = service;
+        _complementoPagoService = complementoPagoService;
         _cancelacionService = cancelacionService;
         _consultaEstatusService = consultaEstatusService;
         _apiClientService = apiClientService;
@@ -79,6 +82,67 @@ public sealed class FacturacionController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, Respuesta<ConsultaEstatusCfdiResultDto>(
                 false,
                 "Ocurrió un error inesperado al consultar el estatus del CFDI.",
+                StatusCodes.Status500InternalServerError,
+                null));
+        }
+    }
+
+    [HttpPost("emitir-complemento-pago")]
+    [Authorize(Policy = "EmitirCfdi")]
+    [EnableRateLimiting("ApiClients")]
+    public async Task<ActionResult<ApiResponse<FacturacionResultDto>>> EmitirComplementoPago(
+        ComplementoPagoDto complemento,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (string.Equals(User.FindFirstValue("auth_type"), "client_credentials", StringComparison.Ordinal))
+            {
+                string redComercialId = User.FindFirstValue("red_comercial_id") ?? string.Empty;
+                if (!await _apiClientService.PuedeEmitirAsync(
+                        redComercialId,
+                        complemento.RfcEmisor,
+                        cancellationToken))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, Respuesta<FacturacionResultDto>(
+                        false,
+                        "El emisor no pertenece a la organización asociada con estas credenciales.",
+                        StatusCodes.Status403Forbidden,
+                        null));
+                }
+            }
+
+            FacturacionResultDto result = await _complementoPagoService.EmitirAsync(
+                complemento,
+                cancellationToken);
+            return Ok(Respuesta(
+                true,
+                "Complemento de pago timbrado correctamente.",
+                StatusCodes.Status200OK,
+                result));
+        }
+        catch (FacturacionException exception)
+        {
+            return BadRequest(Respuesta<FacturacionResultDto>(
+                false,
+                exception.Message,
+                StatusCodes.Status400BadRequest,
+                null));
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(Respuesta<FacturacionResultDto>(
+                false,
+                exception.Message,
+                StatusCodes.Status400BadRequest,
+                null));
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Error inesperado al emitir el complemento de pago.");
+            return StatusCode(StatusCodes.Status500InternalServerError, Respuesta<FacturacionResultDto>(
+                false,
+                "Ocurrió un error inesperado al emitir el complemento de pago.",
                 StatusCodes.Status500InternalServerError,
                 null));
         }

@@ -33,19 +33,31 @@ public sealed class AuthenticationController : ControllerBase
         RequestPasswordRecoveryRequest request,
         CancellationToken cancellationToken)
     {
-        await _passwordRecoveryService.SolicitarAsync(request.Email, cancellationToken);
-        return Ok(new ApiResponse<object>
+        try
         {
-            Success = true,
-            Mensaje = "Si el correo está registrado, recibirás un código de recuperación en unos minutos.",
-            HttpCode = StatusCodes.Status200OK
-        });
+            await _passwordRecoveryService.SolicitarAsync(request.Email, cancellationToken);
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Mensaje = "Si el correo está registrado, recibirás un código de recuperación en unos minutos.",
+                HttpCode = StatusCodes.Status200OK
+            });
+        }
+        catch (FacturaBit.Application.Exceptions.EmailDeliveryException exception)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new ApiResponse<object>
+            {
+                Success = false,
+                Mensaje = exception.Message,
+                HttpCode = StatusCodes.Status503ServiceUnavailable
+            });
+        }
     }
 
     [AllowAnonymous]
     [EnableRateLimiting("PasswordRecovery")]
     [HttpPost("password-recovery/verify")]
-    public async Task<ActionResult<ApiResponse<PasswordRecoveryVerificationDto>>> VerifyPasswordRecoveryCode(
+    public async Task<ActionResult<ApiResponse<object>>> VerifyPasswordRecoveryCode(
         VerifyPasswordRecoveryCodeRequest request,
         CancellationToken cancellationToken)
     {
@@ -54,19 +66,17 @@ public sealed class AuthenticationController : ControllerBase
             request.Code,
             cancellationToken);
         return valid
-            ? Ok(new ApiResponse<PasswordRecoveryVerificationDto>
+            ? Ok(new ApiResponse<object>
             {
                 Success = true,
                 Mensaje = "Código verificado correctamente.",
-                HttpCode = StatusCodes.Status200OK,
-                Data = new PasswordRecoveryVerificationDto { Valid = true }
+                HttpCode = StatusCodes.Status200OK
             })
-            : BadRequest(new ApiResponse<PasswordRecoveryVerificationDto>
+            : BadRequest(new ApiResponse<object>
             {
                 Success = false,
                 Mensaje = "El código es inválido, expiró o superó el número de intentos permitidos.",
-                HttpCode = StatusCodes.Status400BadRequest,
-                Data = new PasswordRecoveryVerificationDto { Valid = false }
+                HttpCode = StatusCodes.Status400BadRequest
             });
     }
 
